@@ -724,31 +724,39 @@ with tab_email:
 
         max_emails = st.slider("Max emails to scan", min_value=5, max_value=20, value=15, step=5)
 
-        # Tier selector (demo — in production read from Stripe)
+        # Tier display & quota status (managed via sidebar)
         current_tier = get_user_tier(user_id)
-        tier = st.selectbox(
-            "Your Plan",
-            options=["free", "pro", "enterprise"],
-            index=["free", "pro", "enterprise"].index(current_tier),
-            format_func=lambda x: {
-                "free":       "🆓 Free (10 emails/day)",
-                "pro":        "⚡ Pro (50 emails/day) — ₹299/mo",
-                "enterprise": "🏢 Enterprise (Unlimited)",
-            }[x],
-            key="user_tier",
-        )
-        if tier != current_tier:
-            set_user_tier(user_id, tier)
+        quota_check = check_email_quota(user_id, requested=0)
+        st.markdown(f"**Plan:** `{current_tier.upper()}` · Scanned today: `{quota_check['total_scanned_today']} / {quota_check['daily_limit']}`")
 
-        # Show IMAP credentials if selected
+        # Show IMAP credentials if selected — with persistent keys so text is NEVER cleared on refresh
         imap_creds = {}
         if provider == "imap":
             st.markdown("**IMAP Credentials:**")
-            imap_creds["email_address"] = st.text_input("Email Address", placeholder="you@gmail.com")
-            imap_creds["app_password"]  = st.text_input("App Password", type="password",
-                                                          placeholder="xxxx xxxx xxxx xxxx")
-            imap_creds["imap_host"]     = st.text_input("IMAP Host", value="imap.gmail.com")
-            st.info("💡 Gmail: Use an App Password from myaccount.google.com/apppasswords")
+            email_val = st.text_input(
+                "Email Address",
+                placeholder="you@gmail.com",
+                key="persistent_imap_email",
+                help="Your full email address"
+            )
+            pwd_val = st.text_input(
+                "App Password",
+                type="password",
+                placeholder="xxxx xxxx xxxx xxxx",
+                key="persistent_imap_pwd",
+                help="16-character Google App Password from myaccount.google.com/apppasswords"
+            )
+            host_val = st.text_input(
+                "IMAP Host",
+                value="imap.gmail.com",
+                key="persistent_imap_host"
+            )
+            imap_creds = {
+                "email_address": email_val,
+                "app_password": pwd_val,
+                "imap_host": host_val,
+            }
+            st.info("💡 Gmail requires a 16-character **App Password** from [myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords)")
         elif provider == "oauth2_gmail":
             st.warning("⚠️ OAuth2 requires `gmail_credentials.json`. See `inboxes/oauth2_gmail_adapter.py` for setup. Use Mock for demo.")
 
