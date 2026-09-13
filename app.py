@@ -774,7 +774,7 @@ with tab_email:
                                 "2. Visit: [https://myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords)\n"
                                 "3. Type `BillWatchdog` as the app name and click **Create**.\n"
                                 "4. Copy the generated 16-character code (e.g. `abcd efgh ijkl mnop`) and paste it into the **App Password** box above."
-                            )"
+                            )
 
 
     with col_results:

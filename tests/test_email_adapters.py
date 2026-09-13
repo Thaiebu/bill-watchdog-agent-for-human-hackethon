@@ -136,7 +136,7 @@ class TestEmailTool:
     def test_mock_provider_returns_results(self):
         from tools.email_tool import fetch_billing_emails
         from metering.tier_engine import set_user_tier
-        set_user_tier("user_test_email", "pro")  # Use pro to avoid quota issues in test
+        set_user_tier("user_test_email", "enterprise")  # Use pro to avoid quota issues in test
 
         result = fetch_billing_emails(
             user_id="user_test_email",
@@ -153,7 +153,7 @@ class TestEmailTool:
     def test_each_email_has_invoice(self):
         from tools.email_tool import fetch_billing_emails
         from metering.tier_engine import set_user_tier
-        set_user_tier("user_test_inv", "pro")
+        set_user_tier("user_test_inv", "enterprise")
 
         result = fetch_billing_emails(
             user_id="user_test_inv",
