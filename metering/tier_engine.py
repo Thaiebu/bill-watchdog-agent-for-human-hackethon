@@ -1,3 +1,23 @@
+
+import os
+
+# ---------------------------------------------------------------------------
+# Quota enforcement flag:
+# - Default: False (Dev/Testing mode — scan as much as you want without limits)
+# - Production: set ENFORCE_TIER_QUOTA=1 or toggle in UI sidebar
+# ---------------------------------------------------------------------------
+_quota_enforcement_enabled = os.environ.get("ENFORCE_TIER_QUOTA", "0").strip() in ("1", "true", "yes")
+
+def set_quota_enforcement(enabled: bool):
+    global _quota_enforcement_enabled
+    _quota_enforcement_enabled = enabled
+
+def is_quota_enforcement_enabled() -> bool:
+    env_override = os.environ.get("ENFORCE_TIER_QUOTA", "").strip()
+    if env_override:
+        return env_override in ("1", "true", "yes")
+    return _quota_enforcement_enabled
+
 """
 SaaS Tier Engine — Enforces Free / Pro / Enterprise usage limits.
 In production, tier is read from a user profile DB or Stripe subscription.
@@ -75,15 +95,27 @@ def get_tier_info(tier: str) -> dict:
     return TIERS.get(tier, TIERS["free"])
 
 
-def check_email_quota(user_id: str, requested: int = 15) -> dict:
+def check_email_quota(user_id: str, requested: int = 15, force_enforce: bool = False) -> dict:
     """
     Check if user has email scan quota remaining today.
     Returns allowed count and a message if limit is hit.
+    If quota enforcement is disabled (Dev/Testing mode), all scans are allowed.
     """
     init_usage_table()
     tier = get_user_tier(user_id)
     tier_info = TIERS[tier]
     daily_limit = tier_info["daily_email_limit"]
+
+    # If quotas are disabled for testing/dev mode: bypass and allow all
+    if not (force_enforce or is_quota_enforcement_enabled()):
+        scanned_today = get_daily_email_count(user_id)
+        return {
+            "allowed": True,
+            "allowed_count": requested,
+            "daily_limit": "Unlimited (Dev Mode)",
+            "total_scanned_today": scanned_today,
+            "message": f"Testing Mode: Quota check bypassed ({scanned_today} scanned today).",
+        }
 
     # Enterprise: no limit
     if daily_limit is None:

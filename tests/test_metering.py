@@ -100,7 +100,8 @@ class TestTierEngine:
             set_user_tier("user_x", "platinum")
 
     def test_free_quota_allows_up_to_limit(self):
-        from metering.tier_engine import check_email_quota, set_user_tier
+        from metering.tier_engine import check_email_quota, set_user_tier, set_quota_enforcement
+        set_quota_enforcement(True)
 
         user = "free_quota_fresh_user"
         set_user_tier(user, "free")

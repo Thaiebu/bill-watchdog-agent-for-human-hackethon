@@ -169,7 +169,8 @@ class TestEmailTool:
     def test_free_tier_quota_enforcement(self):
         from tools.email_tool import fetch_billing_emails
         from metering.usage_tracker import track_event
-        from metering.tier_engine import set_user_tier
+        from metering.tier_engine import set_user_tier, set_quota_enforcement
+        set_quota_enforcement(True)
 
         # Simulate user who already hit their daily quota
         test_user = "quota_test_user"

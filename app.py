@@ -240,7 +240,17 @@ with st.sidebar:
     st.caption("In production, `user_id` is extracted from AWS Cognito / OAuth JWT. For this demo, switch or reset users here.")
     user_id = st.text_input("Active User ID", value="user_1", key="global_user_id")
     
-    from metering.tier_engine import get_user_tier, set_user_tier, check_email_quota, TIERS
+    from metering.tier_engine import (
+        get_user_tier, set_user_tier, check_email_quota, TIERS,
+        is_quota_enforcement_enabled, set_quota_enforcement
+    )
+    enforce_quota = st.toggle(
+        "🔒 Enforce Tier Quotas (Prod)",
+        value=is_quota_enforcement_enabled(),
+        key="prod_quota_enforce_toggle",
+        help="OFF by default for demo & testing (unlimited scans). Turn ON when moving to production."
+    )
+    set_quota_enforcement(enforce_quota)
     current_tier = get_user_tier(user_id)
     selected_tier = st.selectbox(
         "Active Plan",
