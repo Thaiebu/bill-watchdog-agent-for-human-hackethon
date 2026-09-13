@@ -1,0 +1,44 @@
+# Amazon Bedrock AgentCore Deployment Configuration
+# BillWatchdog — Everyday Bill Sentinel Agent
+
+agent:
+  name: billwatchdog
+  description: >
+    BillWatchdog is an autonomous Everyday Agent that silently monitors
+    recurring bills, detects anomalies and price creeps, evaluates budget
+    impact, and auto-drafts dispute emails — only alerting the user when
+    a real financial decision is needed.
+
+  runtime:
+    language: python3.13
+    handler: deployment.agentcore_app.handler
+    entry_point: deployment/agentcore_app.py
+
+  model:
+    provider: bedrock
+    model_id: anthropic.claude-3-haiku-20240307-v1:0
+    region: us-east-1
+
+  tools:
+    - extract_invoice_entities
+    - query_billing_baseline
+    - detect_bill_anomalies
+    - evaluate_budget_impact
+    - draft_dispute_packet
+    - schedule_renewal_deadline
+    - explain_spending_narrative
+
+  guardrails:
+    enabled: true
+    policies:
+      - type: content_filter
+        name: financial_safety
+        rules:
+          - no_investment_advice
+          - no_pii_leakage
+          - courteous_dispute_tone
+
+  environment:
+    variables:
+      DB_PATH: /tmp/billwatchdog.db
+      LOG_LEVEL: INFO
