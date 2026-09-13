@@ -770,6 +770,29 @@ with tab_email:
         elif provider == "oauth2_gmail":
             st.warning("⚠️ OAuth2 requires `gmail_credentials.json`. See `inboxes/oauth2_gmail_adapter.py` for setup. Use Mock for demo.")
 
+        # Bank & Statement Filter
+        bank_choice = st.selectbox(
+            "Filter Messages By",
+            options=["all", "all_banks", "hdfc", "icici", "sbi", "axis", "amex", "custom"],
+            format_func=lambda x: {
+                "all":        "🌐 All Bills & Invoices (No filter)",
+                "all_banks":  "🏦 All Banks & Card Statements Only",
+                "hdfc":       "💳 HDFC Bank Statements",
+                "icici":      "💳 ICICI Bank Statements",
+                "sbi":        "💳 SBI Card e-Statements",
+                "axis":       "💳 Axis Bank Alerts",
+                "amex":       "💳 American Express Statements",
+                "custom":     "🔍 Custom Bank / Keyword...",
+            }[x],
+            key="bank_filter_select",
+            help="Filter specifically for bank e-statements, card bills, and transaction alerts"
+        )
+        custom_kw = None
+        if bank_choice == "custom":
+            custom_kw = st.text_input("Enter Bank / Keyword", placeholder="e.g. Kotak, Chase, HSBC", key="custom_bank_kw")
+
+        selected_bank_filter = custom_kw if bank_choice == "custom" and custom_kw else (None if bank_choice == "all" else bank_choice)
+
         if st.button("🔍 Scan Inbox for Bills", type="primary", use_container_width=True, key="scan_btn"):
             if provider == "imap" and (not imap_creds.get("email_address") or not imap_creds.get("app_password")):
                 st.error("⚠️ Please enter both your Email Address and App Password.")
@@ -781,6 +804,7 @@ with tab_email:
                             provider=provider,
                             max_count=max_emails,
                             credentials=imap_creds if provider == "imap" else None,
+                            bank_filter=selected_bank_filter,
                         )
                         st.session_state["email_scan_result"] = result
                     except Exception as exc:

@@ -78,9 +78,9 @@ class IMAPEmailAdapter(EmailInboxAdapter):
                 ) from e
             raise
 
-    def list_billing_emails(self, max_count: int = 15) -> List[RawEmail]:
+    def list_billing_emails(self, max_count: int = 15, bank_filter: str = None) -> List[RawEmail]:
         """
-        Fetch recent emails from INBOX, filter for billing-related ones,
+        Fetch recent emails from INBOX, filter for billing/bank-related ones,
         and return up to max_count.
         """
         if not self.email_address or not self.app_password:
@@ -92,10 +92,10 @@ class IMAPEmailAdapter(EmailInboxAdapter):
         mail = self._connect()
         mail.select("INBOX")
 
-        # Search last 60 emails by date
+        # Search recent emails (fetch last 100 to ensure monthly statements are caught)
         status, messages = mail.search(None, "ALL")
-        all_ids = messages[0].split()
-        recent_ids = all_ids[-60:] if len(all_ids) > 60 else all_ids
+        all_ids = messages[0].split() if messages and messages[0] else []
+        recent_ids = all_ids[-100:] if len(all_ids) > 100 else all_ids
         recent_ids = list(reversed(recent_ids))  # Newest first
 
         billing_emails: List[RawEmail] = []
@@ -105,6 +105,8 @@ class IMAPEmailAdapter(EmailInboxAdapter):
                 break
 
             status, data = mail.fetch(msg_id, "(RFC822)")
+            if not data or not data[0] or not isinstance(data[0], tuple):
+                continue
             raw_email = data[0][1]
             msg = email_lib.message_from_bytes(raw_email)
 
@@ -112,7 +114,7 @@ class IMAPEmailAdapter(EmailInboxAdapter):
             sender  = _decode_header_value(msg.get("From", ""))
             date    = _parse_date(msg.get("Date", ""))
 
-            if not is_billing_email(subject, sender):
+            if not is_billing_email(subject, sender, bank_filter=bank_filter):
                 continue
 
             body = _extract_body(msg)

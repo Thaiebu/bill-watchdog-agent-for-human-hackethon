@@ -338,6 +338,84 @@ Currency: INR
 Increase Note: Annual revision due to medical inflation index.
 Due Date: September 15, 2026""".format(date=_days_ago(1)),
     ),
+
+    RawEmail(
+        id="mock-021",
+        subject="HDFC Bank Credit Card e-Statement for Sep 2026",
+        sender="alerts@hdfcbank.net",
+        date="2026-09-08",
+        snippet="Dear Customer, your HDFC Bank Regalia Credit Card e-Statement for the billing cycle ending 05-Sep-2026 is ready. Total Amount Due: INR 18,450.00. Minimum Amount Due: INR 1,200.00.",
+        body_text="""HDFC BANK CREDIT CARD STATEMENT
+Card: Regalia Gold ending in 4128
+Billing Cycle: 06-Aug-2026 to 05-Sep-2026
+Payment Due Date: 25-Sep-2026
+Total Amount Due: INR 18,450.00
+Minimum Amount Due: INR 1,200.00
+Available Credit Limit: INR 3,81,550.00
+Payment Options: Pay instantly via HDFC NetBanking or UPI.
+""",
+    ),
+    RawEmail(
+        id="mock-022",
+        subject="ICICI Bank Credit Card Statement Alert",
+        sender="credit_cards@icicibank.com",
+        date="2026-09-09",
+        snippet="Your ICICI Bank Sapphiro Card statement ending Sep 2026 is generated. Total Due: Rs 12,800.00. Due Date: 28-Sep-2026.",
+        body_text="""ICICI BANK CARD STATEMENT
+Account: ICICI Sapphiro Credit Card
+Statement Date: 08-Sep-2026
+Due Date: 28-Sep-2026
+Total Amount Due: Rs 12,800.00
+Minimum Due: Rs 950.00
+Transactions:
+1. Swiggy INR 850
+2. MakeMyTrip Flights INR 8,950
+3. Supermarket INR 3,000
+""",
+    ),
+    RawEmail(
+        id="mock-023",
+        subject="SBI Card e-Statement - Total Amount Due",
+        sender="statements@sbicard.com",
+        date="2026-09-07",
+        snippet="Dear Cardholder, your monthly SBI Card statement is ready. Total Amount Due is Rs. 7,290.00. Payment Due Date: 26-Sep-2026.",
+        body_text="""SBI CARD STATEMENT
+Card ending: 8812
+Statement Period: 07 Aug 2026 - 06 Sep 2026
+Payment Due Date: 26 Sep 2026
+Total Amount Due: Rs 7,290.00
+Minimum Amount Due: Rs 500.00
+Auto-Debit: Not Registered. Please pay before due date.
+""",
+    ),
+    RawEmail(
+        id="mock-024",
+        subject="Axis Bank Card Bill Due Notification",
+        sender="alerts@axisbank.com",
+        date="2026-09-06",
+        snippet="Axis Bank Credit Card Alert: Bill of INR 4,990.00 is generated for your Magnus card. Due date: 24-Sep-2026.",
+        body_text="""AXIS BANK CREDIT CARD BILL
+Card: Axis Bank Magnus
+Billing Month: September 2026
+Total Bill Amount: INR 4,990.00
+Due Date: 24-Sep-2026
+Pay now to avoid finance charges of 3.6% per month.
+""",
+    ),
+    RawEmail(
+        id="mock-025",
+        subject="American Express Card Monthly Statement",
+        sender="service@americanexpress.com",
+        date="2026-09-10",
+        snippet="Your American Express Platinum Statement is available online. New Balance: INR 24,500.00. Payment Due: 30 Sep 2026.",
+        body_text="""AMERICAN EXPRESS STATEMENT
+Account ending in: 31005
+Statement Date: 10 Sep 2026
+New Balance: INR 24,500.00
+Payment Due Date: 30 Sep 2026
+AutoPay is scheduled for 28 Sep 2026.
+""",
+    ),
     RawEmail(
         id="mock-020",
         subject="Vercel Pro - Invoice September 2026",
@@ -370,11 +448,11 @@ class MockEmailAdapter(EmailInboxAdapter):
     def provider_name(self) -> str:
         return "Mock Demo Inbox"
 
-    def list_billing_emails(self, max_count: int = 15) -> List[RawEmail]:
-        """Return billing emails from the mock dataset, up to max_count."""
+    def list_billing_emails(self, max_count: int = 15, bank_filter: str = None) -> List[RawEmail]:
+        """Return billing emails from the mock dataset, up to max_count, optionally filtered by bank."""
         billing = [
             email for email in MOCK_EMAILS
-            if is_billing_email(email.subject, email.sender)
+            if is_billing_email(email.subject, email.sender, bank_filter=bank_filter)
         ]
         return billing[:max_count]
 

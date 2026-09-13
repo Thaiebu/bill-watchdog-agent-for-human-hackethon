@@ -51,14 +51,54 @@ EXCLUDE_KEYWORDS = [
     "marketing", "sale ends", "limited time",
 ]
 
+# Bank-specific identifiers (domains, abbreviations, and keywords)
+BANK_IDENTIFIERS = {
+    "all_banks": [
+        "bank", "card", "statement", "credit card", "debit card",
+        "hdfc", "icici", "sbi", "axis", "kotak", "rbl", "indusind",
+        "citi", "amex", "american express", "chase", "hsbc", "barclays"
+    ],
+    "hdfc": ["hdfc", "hdfcbank", "hdfc bank"],
+    "icici": ["icici", "icicibank", "icici bank"],
+    "sbi": ["sbi", "sbicard", "sbi card", "state bank of india"],
+    "axis": ["axis", "axisbank", "axis bank"],
+    "kotak": ["kotak", "kotakbank", "kotak mahindra"],
+    "amex": ["amex", "american express", "americanexpress"],
+    "chase": ["chase", "jpmorgan"],
+}
 
-def is_billing_email(subject: str, sender: str) -> bool:
-    """Return True if an email is likely a billing/financial notification."""
+
+
+def matches_bank_filter(subject: str, sender: str, bank_filter: str) -> bool:
+    """Check if an email matches a bank/financial institution filter."""
+    if not bank_filter or bank_filter == "all":
+        return True
+    
+    text = f"{subject} {sender}".lower()
+    filter_key = bank_filter.lower().strip()
+    
+    # Predefined bank list check
+    if filter_key in BANK_IDENTIFIERS:
+        return any(term in text for term in BANK_IDENTIFIERS[filter_key])
+    
+    # Custom bank name check
+    return filter_key in text
+
+
+def is_billing_email(subject: str, sender: str, bank_filter: str = None) -> bool:
+    """
+    Return True if an email is a billing notification, optionally filtered
+    by a specific bank or all banks.
+    """
     subject_lower = subject.lower()
     sender_lower  = sender.lower()
 
     # Exclude marketing noise first
     if any(kw in subject_lower for kw in EXCLUDE_KEYWORDS):
+        return False
+
+    # Check bank filter if requested
+    if bank_filter and not matches_bank_filter(subject, sender, bank_filter):
         return False
 
     # Check subject keywords
@@ -68,6 +108,11 @@ def is_billing_email(subject: str, sender: str) -> bool:
     # Check sender patterns
     if any(kw in sender_lower for kw in BILLING_SENDER_KEYWORDS):
         return True
+
+    # Also detect bank statements directly as billing
+    if any(term in subject_lower or term in sender_lower for term in BANK_IDENTIFIERS["all_banks"]):
+        if any(term in subject_lower for term in ["statement", "due", "bill", "alert", "debit", "spent", "e-statement"]):
+            return True
 
     return False
 
@@ -79,7 +124,7 @@ class EmailInboxAdapter(ABC):
     """
 
     @abstractmethod
-    def list_billing_emails(self, max_count: int = 15) -> List[RawEmail]:
+    def list_billing_emails(self, max_count: int = 15, bank_filter: str = None) -> List[RawEmail]:
         """
         Fetch and filter billing-related emails from the inbox.
 

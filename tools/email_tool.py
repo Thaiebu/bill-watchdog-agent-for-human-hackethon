@@ -15,6 +15,7 @@ def fetch_billing_emails(
     provider: str = "mock",
     max_count: int = 15,
     credentials: dict = None,
+    bank_filter: str = None,
 ) -> dict:
     """
     Fetch billing-related emails from the user's inbox using the specified
@@ -52,7 +53,7 @@ def fetch_billing_emails(
     adapter = get_adapter(provider, credentials or {})
 
     # Fetch billing emails (adapter handles auth + filtering)
-    raw_emails = adapter.list_billing_emails(max_count=allowed_count)
+    raw_emails = adapter.list_billing_emails(max_count=allowed_count, bank_filter=bank_filter)
 
     # Track usage event
     track_event(user_id, "email_scanned", {

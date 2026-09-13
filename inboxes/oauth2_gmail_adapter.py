@@ -86,7 +86,7 @@ class OAuth2GmailAdapter(EmailInboxAdapter):
         self._service = build("gmail", "v1", credentials=creds)
         return self._service
 
-    def list_billing_emails(self, max_count: int = 15) -> List[RawEmail]:
+    def list_billing_emails(self, max_count: int = 15, bank_filter: str = None) -> List[RawEmail]:
         """Fetch billing emails via Gmail API with billing keyword query."""
         service = self._get_service()
 

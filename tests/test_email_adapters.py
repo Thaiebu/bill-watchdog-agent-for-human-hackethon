@@ -190,3 +190,21 @@ class TestEmailTool:
         assert result["quota_exceeded"] is True
         assert result["billing_emails_found"] == 0
         assert "Upgrade" in result["message"]
+
+
+    def test_bank_filter_matches_hdfc(self):
+        from inboxes.base_adapter import is_billing_email
+        assert is_billing_email("HDFC Bank Credit Card Statement", "alerts@hdfcbank.net", bank_filter="hdfc") is True
+        assert is_billing_email("Spotify Premium receipt", "billing@spotify.com", bank_filter="hdfc") is False
+
+    def test_bank_filter_matches_all_banks(self):
+        from inboxes.base_adapter import is_billing_email
+        assert is_billing_email("ICICI Bank Credit Card Statement", "credit_cards@icicibank.com", bank_filter="all_banks") is True
+        assert is_billing_email("Netflix subscription", "billing@netflix.com", bank_filter="all_banks") is False
+
+    def test_mock_adapter_filters_by_bank(self):
+        from inboxes.mock_adapter import MockEmailAdapter
+        adapter = MockEmailAdapter()
+        hdfc_emails = adapter.list_billing_emails(max_count=10, bank_filter="hdfc")
+        assert len(hdfc_emails) > 0
+        assert all("hdfc" in (e.subject + e.sender).lower() for e in hdfc_emails)
