@@ -59,9 +59,24 @@ class IMAPEmailAdapter(EmailInboxAdapter):
         return f"IMAP ({self.imap_host})"
 
     def _connect(self) -> imaplib.IMAP4_SSL:
-        mail = imaplib.IMAP4_SSL(self.imap_host, self.imap_port)
-        mail.login(self.email_address, self.app_password)
-        return mail
+        try:
+            mail = imaplib.IMAP4_SSL(self.imap_host, self.imap_port)
+            # Remove any spaces that user might have copied from Google UI (e.g. "abcd efgh ijkl mnop")
+            clean_password = self.app_password.replace(" ", "").strip()
+            mail.login(self.email_address.strip(), clean_password)
+            return mail
+        except imaplib.IMAP4.error as e:
+            err_msg = str(e)
+            if "Application-specific password required" in err_msg or "support.google.com/accounts/answer/185833" in err_msg:
+                raise PermissionError(
+                    "Google requires a 16-character App Password (not your normal Gmail password). "
+                    "Generate one in 30 seconds at: https://myaccount.google.com/apppasswords"
+                ) from e
+            elif "authentication failed" in err_msg.lower() or "invalid credentials" in err_msg.lower():
+                raise PermissionError(
+                    "Invalid email or App Password. Check that 2FA is enabled and your 16-character App Password is correct."
+                ) from e
+            raise
 
     def list_billing_emails(self, max_count: int = 15) -> List[RawEmail]:
         """

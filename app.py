@@ -753,14 +753,29 @@ with tab_email:
             st.warning("⚠️ OAuth2 requires `gmail_credentials.json`. See `inboxes/oauth2_gmail_adapter.py` for setup. Use Mock for demo.")
 
         if st.button("🔍 Scan Inbox for Bills", type="primary", use_container_width=True, key="scan_btn"):
-            with st.spinner(f"Scanning inbox via {provider}..."):
-                result = fetch_billing_emails(
-                    user_id=user_id,
-                    provider=provider,
-                    max_count=max_emails,
-                    credentials=imap_creds if provider == "imap" else None,
-                )
-                st.session_state["email_scan_result"] = result
+            if provider == "imap" and (not imap_creds.get("email_address") or not imap_creds.get("app_password")):
+                st.error("⚠️ Please enter both your Email Address and App Password.")
+            else:
+                with st.spinner(f"Scanning inbox via {provider}..."):
+                    try:
+                        result = fetch_billing_emails(
+                            user_id=user_id,
+                            provider=provider,
+                            max_count=max_emails,
+                            credentials=imap_creds if provider == "imap" else None,
+                        )
+                        st.session_state["email_scan_result"] = result
+                    except Exception as exc:
+                        st.error(f"❌ Connection Error: {exc}")
+                        if "myaccount.google.com/apppasswords" in str(exc) or "App Password" in str(exc):
+                            st.warning(
+                                "🔑 **Gmail App Password Setup (1 minute):**\n"
+                                "1. Make sure **2-Step Verification** is turned ON in your Google Account.\n"
+                                "2. Visit: [https://myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords)\n"
+                                "3. Type `BillWatchdog` as the app name and click **Create**.\n"
+                                "4. Copy the generated 16-character code (e.g. `abcd efgh ijkl mnop`) and paste it into the **App Password** box above."
+                            )"
+
 
     with col_results:
         st.markdown("#### 📨 Scanned Billing Emails")
