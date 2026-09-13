@@ -32,7 +32,7 @@ def seed_all():
 
 def _seed_budget_limits():
     limits = {
-        "total":          60000,
+        "total":          50000,
         "subscriptions":   5000,
         "utilities":       8000,
         "internet":        3000,

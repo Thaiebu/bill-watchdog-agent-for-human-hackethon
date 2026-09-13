@@ -492,7 +492,7 @@ with right_col:
 
     # Process All button
     st.markdown("")
-    if st.button("🚀 Process All 5 Bills (Full Demo)", key="process_all_btn", use_container_width=True):
+    if st.button(f"🚀 Process All {len(DEMO_BILLS)} Bills (Full Demo)", key="process_all_btn", use_container_width=True):
         for bill_obj in DEMO_BILLS:
             bill_data = bill_obj["raw"]
             bill_id = bill_obj["id"]
