@@ -231,6 +231,50 @@ st.markdown("""
 # Main Layout: Left (Budget + Alerts) | Right (Agent Stream + Actions)
 # ──────────────────────────────────────────────────────────────────────────
 
+
+# ──────────────────────────────────────────────────────────────────────────
+# Sidebar: User Account & Quota Simulation (Pre-auth architecture)
+# ──────────────────────────────────────────────────────────────────────────
+with st.sidebar:
+    st.markdown("### 👤 User Account")
+    st.caption("In production, `user_id` is extracted from AWS Cognito / OAuth JWT. For this demo, switch or reset users here.")
+    user_id = st.text_input("Active User ID", value="user_1", key="global_user_id")
+    
+    from metering.tier_engine import get_user_tier, set_user_tier, check_email_quota, TIERS
+    current_tier = get_user_tier(user_id)
+    selected_tier = st.selectbox(
+        "Active Plan",
+        options=["free", "pro", "enterprise"],
+        index=["free", "pro", "enterprise"].index(current_tier),
+        format_func=lambda x: {
+            "free": "🆓 Free (10/day)",
+            "pro": "⚡ Pro (50/day) — ₹299/mo",
+            "enterprise": "🏢 Enterprise (Unlimited)"
+        }[x],
+        key="sidebar_plan_select"
+    )
+    if selected_tier != current_tier:
+        set_user_tier(user_id, selected_tier)
+        st.rerun()
+        
+    quota_info = check_email_quota(user_id, requested=0)
+    st.markdown(f"**Quota Today:** `{quota_info['total_scanned_today']}` / `{quota_info['daily_limit']}` emails")
+    
+    if st.button("🔄 Reset Today's Quota", use_container_width=True, help="Clear today's scan count for testing"):
+        import sqlite3
+        from datetime import date
+        conn = sqlite3.connect("storage/billwatchdog.db")
+        conn.execute("DELETE FROM usage_events WHERE user_id = ? AND timestamp LIKE ?", (user_id, f"{date.today().isoformat()}%"))
+        conn.commit()
+        conn.close()
+        st.success("Quota reset!")
+        time.sleep(0.5)
+        st.rerun()
+        
+    st.divider()
+    st.markdown("### 🛠️ Architecture Note")
+    st.caption("All SQLite tables (`bills`, `baselines`, `usage_events`) filter by `user_id`. Multi-tenancy is fully implemented at the database & tool layer.")
+
 left_col, right_col = st.columns([1, 1], gap="large")
 
 
@@ -242,7 +286,7 @@ with left_col:
     # ── Section 1: Budget Overview ──
     st.markdown("### 📊 Budget Overview")
 
-    user_id = "user_1"
+    # user_id is provided by sidebar
     limits = get_budget_limits(user_id)
     total_budget = limits.get("total", 50000)
     this_month_bills = get_all_bills_this_month(user_id)
