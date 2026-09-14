@@ -4,6 +4,7 @@
 **Hackathon:** AWS Agents for Humans Hackathon 2026  
 **Track:** Everyday Agents  
 **GitHub Repository:** https://github.com/Thaiebu/bill-watchdog-agent-for-human-hackethon  
+**License:** MIT License (`LICENSE`)  
 
 ---
 
@@ -51,7 +52,7 @@ BillWatchdog follows a radical UX principle: **The best agent is the one you rar
 
 BillWatchdog was built from the ground up using modern agentic software patterns:
 
-- **AWS Strands Agents SDK:** Built with genuine multi-tool agentic orchestration using 8 modular `@tool` decorators (`extractor_tool`, `baseline_tool`, `anomaly_tool`, `budget_tool`, `dispute_tool`, `scheduler_tool`, `narrative_tool`, `email_tool`).
+- **AWS Strands Agents SDK:** Built with genuine multi-tool agentic orchestration using 9 modular `@tool` decorators (`extractor_tool`, `baseline_tool`, `anomaly_tool`, `budget_tool`, `dispute_tool`, `scheduler_tool`, `narrative_tool`, `email_tool`, `pdf_statement_tool`).
 - **Amazon Bedrock & Claude 3 Haiku:** Powers the agent reasoning loop, entity extraction from ambiguous email bodies, and dispute generation.
 - **Local Ollama Support (`gemma4:e4b` / `llama3.1`):** Seamless local fallback when AWS credentials are not set, ensuring 100% offline development and zero API cost testing.
 - **Adapter Design Pattern:** Abstract `EmailInboxAdapter` interface with 3 swappable implementations (`MockEmailAdapter`, `IMAPEmailAdapter`, `OAuth2GmailAdapter`).
@@ -71,8 +72,8 @@ BillWatchdog was built from the ground up using modern agentic software patterns
 
 ## 🌟 Accomplishments That We're Proud Of
 
-- **8 Specialized Strands Agent Tools** working in harmony.
-- **44 Unit Tests passing 100%** across tool extraction, adapters, quota enforcement, and Bedrock cost estimation.
+- **9 Specialized Strands Agent Tools** working in harmony.
+- **56 Unit Tests passing 100%** across tool extraction, adapters, quota enforcement, and Bedrock cost estimation.
 - **True "Silent Background" Pattern:** 5 out of 10 demo bills are processed silently with zero interruption; 5 anomalies are caught with precision.
 - **Production-Ready Metering:** Real-time token tracking and AWS cost calculation ($0.00025/1k input, $0.00125/1k output tokens) proving commercial viability.
 
