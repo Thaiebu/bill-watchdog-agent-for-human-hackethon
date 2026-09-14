@@ -53,6 +53,101 @@ def extract_invoice_entities(raw_content: str, source_type: str = "json") -> dic
     })
 
 
+
+def parse_bank_statement_transactions(text: str) -> list[dict]:
+    """
+    Parse tabular bank statement text (such as IndusInd, HDFC, ICICI, SBI e-statements)
+    containing DATE, PARTICULARS/MODE, DEPOSITS, WITHDRAWALS, BALANCE.
+    Returns structured list of transactions.
+    """
+    tokens = re.split(r"(?=\b\d{2}[-/]\d{2}[-/]\d{4}\b)", text)
+    transactions = []
+    current_balance = None
+
+    for block in tokens:
+        block = block.strip()
+        if not block:
+            continue
+        m = re.match(r"^(\d{2}[-/]\d{2}[-/]\d{4})\s*(.*)", block, re.DOTALL)
+        if not m:
+            continue
+        date_str, rest = m.group(1), m.group(2).strip()
+
+        # Handle opening balance / B/F
+        if re.search(r"\bB/F\b", rest, re.IGNORECASE):
+            bf_amt = re.search(r"B/F\s*([\d,]+\.?\d*)", rest, re.IGNORECASE)
+            if bf_amt:
+                try:
+                    current_balance = float(bf_amt.group(1).replace(",", ""))
+                except ValueError:
+                    pass
+            continue
+
+        # Extract all numbers formatted as currency
+        amounts = re.findall(r"[\d,]+\.\d{2}", rest)
+        if not amounts:
+            amounts = re.findall(r"[\d,]+", rest)
+
+        # Particulars
+        particulars = rest
+        for a in amounts:
+            particulars = particulars.replace(a, "")
+
+        lines = [l.strip() for l in particulars.split("\n") if l.strip()]
+        vendor = "Unknown"
+        if lines:
+            first = lines[0]
+            if first.startswith("ACH/"):
+                parts = first.split("/")
+                vendor = parts[1] if len(parts) > 1 else first
+            elif "ICICI DIRECT" in first:
+                vendor = "ICICI DIRECT"
+            elif first.startswith("UPI/"):
+                upi_parts = first.split("/")
+                vendor = upi_parts[1] if len(upi_parts) > 1 else first
+            else:
+                vendor = first
+
+        num_vals = []
+        for a in amounts:
+            try:
+                num_vals.append(float(a.replace(",", "")))
+            except ValueError:
+                pass
+
+        spent = 0.0
+        deposit = 0.0
+
+        if len(num_vals) >= 2:
+            txn_amt = num_vals[0]
+            new_bal = num_vals[1]
+            if current_balance is not None and round(current_balance + txn_amt, 2) == round(new_bal, 2):
+                deposit = txn_amt
+            else:
+                spent = txn_amt
+            current_balance = new_bal
+        elif len(num_vals) == 1:
+            txn_amt = num_vals[0]
+            if any(x in rest.lower() for x in ["reimb", "salary", "credit", "cr/", "deposit"]):
+                deposit = txn_amt
+                if current_balance is not None:
+                    current_balance += deposit
+            else:
+                spent = txn_amt
+                if current_balance is not None:
+                    current_balance -= spent
+
+        transactions.append({
+            "date": date_str,
+            "vendor": vendor,
+            "spent": spent,
+            "deposit": deposit,
+            "balance": current_balance,
+        })
+
+    return transactions
+
+
 def _extract_banking_alert(text: str) -> dict | None:
     """
     Detect and extract entities from Indian bank transaction alerts,
@@ -76,6 +171,46 @@ def _extract_banking_alert(text: str) -> dict | None:
     if not bank_name:
         b_match = re.search(r"([A-Za-z0-9]+ Bank)", text)
         bank_name = b_match.group(1) if b_match else "Bank Alert"
+
+    # Check for multi-transaction statement table
+    multi_txns = parse_bank_statement_transactions(text)
+    if len(multi_txns) > 1:
+        total_spent = sum(t["spent"] for t in multi_txns)
+        total_deposits = sum(t["deposit"] for t in multi_txns)
+        latest_date = multi_txns[-1]["date"]
+        if "-" in latest_date and len(latest_date.split("-")[0]) == 2:
+            d_parts = latest_date.split("-")
+            date_val = f"{d_parts[2]}-{d_parts[1]}-{d_parts[0]}"
+        else:
+            date_val = latest_date
+
+        line_items = [
+            {
+                "name": f"{t['vendor']} ({t['date']})",
+                "amount": t["spent"],
+                "date": t["date"],
+                "vendor": t["vendor"],
+                "spent": t["spent"],
+                "deposit": t["deposit"],
+                "balance": t["balance"],
+            }
+            for t in multi_txns
+        ]
+        return {
+            "merchant_name": f"{bank_name} Monthly Statement ({len(multi_txns)} Txns)",
+            "invoice_date": date_val,
+            "billing_period": f"{multi_txns[0]['date']} to {multi_txns[-1]['date']}",
+            "total_amount": round(total_spent, 2),
+            "currency": "INR",
+            "line_items": line_items,
+            "detected_terms": [
+                f"{len(multi_txns)} Transactions Extracted",
+                f"Total Debits: ₹{total_spent:,.2f}",
+                f"Total Credits: ₹{total_deposits:,.2f}",
+                "Confidential PII Masked",
+            ],
+        }
+
 
     # Detect Amount
     amt = None

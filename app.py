@@ -9,6 +9,7 @@ import os
 import json
 import time
 from datetime import datetime
+import pandas as pd
 
 # Ensure project root is importable
 ROOT = os.path.dirname(os.path.abspath(__file__))
@@ -744,6 +745,28 @@ with right_col:
         """, unsafe_allow_html=True)
 
     st.markdown("---")
+
+    # ── Section 3: Bank Statement Breakdown ──
+    stmt_bills = [res["invoice"] for res in st.session_state.bill_results.values() 
+                  if any("date" in item for item in res.get("invoice", {}).get("line_items", []))]
+    if stmt_bills:
+        st.markdown("### 📑 Bank Statement Breakdown")
+        for stmt in stmt_bills:
+            with st.expander(f"📊 {stmt['merchant_name']} — Total Debited: ₹{stmt['total_amount']:,.2f} ({len(stmt['line_items'])} Transactions)", expanded=True):
+                rows = []
+                for item in stmt["line_items"]:
+                    spent_val = item.get("spent", item.get("amount", 0))
+                    dep_val = item.get("deposit", 0)
+                    bal_val = item.get("balance")
+                    rows.append({
+                        "Date": item.get("date", stmt.get("invoice_date", "")),
+                        "Vendor / Particulars": item.get("vendor", item.get("name", "")),
+                        "Spent (₹)": f"₹{spent_val:,.2f}" if spent_val > 0 else "-",
+                        "Deposit (₹)": f"₹{dep_val:,.2f}" if dep_val > 0 else "-",
+                        "Running Balance (₹)": f"₹{bal_val:,.2f}" if bal_val is not None else "-"
+                    })
+                st.dataframe(pd.DataFrame(rows), use_container_width=True)
+        st.markdown("---")
 
     # ── Section 4: Action Center (Dispute Drafts) ──
     st.markdown("### ⚡ Action Center")
