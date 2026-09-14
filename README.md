@@ -1,293 +1,181 @@
 # 💸 BillWatchdog — Silent Bill Sentinel
 
 > **Everyday Agent | Agents for Humans Hackathon 2026**
-> Built with **AWS Strands Agents SDK** · **Local Ollama** (no AWS creds needed) · **Streamlit**
+> Built with **AWS Strands Agents SDK** · **Amazon Bedrock Claude 3 Haiku** · **Local Ollama Fallback** · **Streamlit**
+
+[![Tests](https://img.shields.io/badge/Tests-56%2F56%20Passing-brightgreen)](tests/)
+[![Security](https://img.shields.io/badge/Privacy-Zero--Storage%20In--Memory-blueviolet)](scripts/check_confidential.py)
+[![Hackathon](https://img.shields.io/badge/Devpost-Agents%20for%20Humans-orange)](https://agentsforhumans.devpost.com/)
 
 ---
 
 ## 🧠 What It Does
 
-BillWatchdog is an **autonomous background agent** that silently watches your bills. It reads your inbox, compares every bill against your personal spending history, and only alerts you when a real decision needs to be made — a stealth price hike, an expired promo, a hidden fee, or a budget breach.
+BillWatchdog is an **autonomous background agent** that silently watches your recurring bills and monthly bank statements. It ingests your bills from email or encrypted bank statements, compares every charge against your historical spending baseline, and only alerts you when a real decision needs to be made — a stealth price hike, an expired promo, a hidden infrastructure surcharge, or a budget breach.
 
 ```
-95% of bills → 😶 SILENT   (archived quietly, zero noise)
- 5% of bills → 🚨 ACTION   (alert + dispute email drafted automatically)
+95% of bills → 😶 SILENT   (archived quietly into SQLite, zero notification noise)
+ 5% of bills → 🚨 ACTION   (alert + vendor-specific dispute letter drafted automatically)
 ```
 
 ### The Problem It Solves
 The average Indian household loses **₹26,000+/year** to:
-- 📈 Silent price hikes buried in billing emails
+- 📈 Silent price hikes buried in billing notifications
 - ⏰ Promotional discounts expiring without notice
 - 💳 Seat count / usage creeping up unnoticed
 - 🔁 Annual auto-renewals for forgotten subscriptions
 - 💰 Hidden infrastructure or surcharge fees added quietly
+- 📑 Dense, password-protected monthly bank PDF statements that are never audited
 
 ---
 
-## ✅ What's Implemented
+## ✨ Key Capabilities & Engineering Milestones
 
-### 8 Strands Agent Tools
+### 🛡️ 1. Zero-Trust Privacy & In-Memory Statement Decryption
+* **Volatile Memory Only**: Password-protected bank statement PDFs (IndusInd, HDFC, ICICI, SBI, Axis, etc.) are decrypted and parsed strictly in volatile memory using `pypdf` + `fonttools`.
+* **Zero Password Retention**: Passwords are wiped from RAM immediately after decryption (`del password`, `gc.collect()`). Passwords and statement bytes are **NEVER** saved to disk, SQLite, or telemetry logs.
+* **Confidentiality Git Hooks**: Includes `scripts/check_confidential.py` wired to Git `pre-commit` and `pre-push` hooks. It scans files before push to guarantee that no AWS keys, app passwords, private keys, or PII ever leak to GitHub.
+* **PII Masking**: Bank account and card numbers are masked at ingestion (e.g. *ending in 6528*).
+
+### 📑 2. Indian Banking Tabular Statement Intelligence
+* **Multi-Transaction Table Parser**: Automatically extracts tabular statements containing `DATE`, `PARTICULARS`, `DEPOSITS`, `WITHDRAWALS`, and `BALANCE`.
+* **Debit vs Credit Separation**: Distinguishes expense outflows (UPI, card, mutual fund SIPs) from inflows (salary, employer reimbursements).
+* **Running Balance Calculation**: Tracks opening brought forward (B/F) balances and running ledgers with penny accuracy.
+* **Executive Agent Audit**: Generates an instant narrative identifying primary burn drivers, systematic investment plans (ICICI Direct, TATA MF), routine transport (Indian Railways), and employer reimbursements.
+
+### 🎨 3. Dynamic Dual Theme Engine (Dark & Light Mode)
+* **Instant Mode Switcher**: Header and sidebar toggle switches between **🌙 Obsidian Dark Mode** (`#090d16`) and **☀️ Clean Slate Light Mode** (`#f8fafc`).
+* **Responsive 2×2 FinTech KPI Grid**: High-contrast tiles for *Total Debited*, *Total Credited*, *Net Cash Outflow*, and *Transactions Extracted* with zero text wrapping or overlapping.
+* **Dedicated Agent Audit Card**: High-contrast card with highlighted pill badges for top outflows and an emerald Sentinel verdict.
+
+---
+
+## 🛠️ Strands Agent Tools (9 Tools)
 
 | # | Tool | File | What it does |
 |---|------|------|--------------|
-| 1 | `extract_invoice_entities` | `tools/extractor_tool.py` | Parses vendor name, amount, period, line items from any bill |
+| 1 | `extract_invoice_entities` | `tools/extractor_tool.py` | Parses vendor name, amount, period, line items, and banking tables |
 | 2 | `query_billing_baseline` | `tools/baseline_tool.py` | Fetches 6-month historical average for the vendor from SQLite |
 | 3 | `detect_bill_anomalies` | `tools/anomaly_tool.py` | Flags price hikes (±5% subscriptions, ±20% utilities), promo expiry, hidden fees |
 | 4 | `evaluate_budget_impact` | `tools/budget_tool.py` | Calculates Safe-to-Spend, category limits, monthly forecast |
 | 5 | `draft_dispute_packet` | `tools/dispute_tool.py` | Auto-drafts vendor-specific dispute / cancellation email |
 | 6 | `schedule_renewal_deadline` | `tools/scheduler_tool.py` | Adds calendar reminders for renewal / review deadlines |
 | 7 | `explain_spending_narrative` | `tools/narrative_tool.py` | Answers natural language questions about spending trends |
-| 8 | `fetch_billing_emails` | `tools/email_tool.py` | Fetches emails from inbox using the Adapter Pattern |
-
-### Email Adapter Pattern (swap providers in one line)
-
-| Adapter | Class | Use Case |
-|---------|-------|----------|
-| Mock (demo) | `MockEmailAdapter` | 20 synthetic bills — no auth needed |
-| IMAP | `IMAPEmailAdapter` | Gmail / Outlook / Yahoo via App Password |
-| Gmail OAuth2 | `OAuth2GmailAdapter` | Production — full OAuth2 flow |
-
-### SaaS Tier Metering
-
-| Tier | Emails/day | Disputes | Price |
-|------|-----------|----------|-------|
-| Free | 10 | 1/month | ₹0 |
-| Pro | 50 | Unlimited | ₹299/mo |
-| Enterprise | Unlimited | Unlimited | Custom |
-
-### Test Coverage
-
-| Test file | Tests | What's tested |
-|-----------|-------|---------------|
-| `tests/test_tools.py` | 13 | All 7 processing tools |
-| `tests/test_email_adapters.py` | 16 | Adapters, billing filter, quota |
-| `tests/test_metering.py` | 15 | Usage tracking, tiers, cost estimation |
-| **Total** | **44** | All passing ✅ |
+| 8 | `fetch_billing_emails` | `tools/email_tool.py` | Fetches emails from inbox using the Adapter Pattern + Bank filter |
+| 9 | `decrypt_and_extract_statement` | `tools/pdf_statement_tool.py` | In-memory zero-storage decryption of password-protected PDF statements |
 
 ---
 
-## 🚀 How to Run
+## 📧 Email & Document Ingestion (Adapter Pattern)
 
-### Option A — Local with Ollama (Recommended — No AWS needed)
+| Adapter | Class | Capabilities |
+|---------|-------|--------------|
+| **Mock (demo)** | `MockEmailAdapter` | 26 synthetic bills + encrypted PDF statement (`IndusInd_eStatement_Sep2026.pdf`) |
+| **IMAP** | `IMAPEmailAdapter` | Gmail / Outlook via App Password + PDF attachment extraction + Bank filter |
+| **Direct PDF Upload** | UI Ingestion | Direct upload of password-protected bank statement PDFs with memory-only decryption |
+| **Gmail OAuth2** | `OAuth2GmailAdapter` | Production OAuth2 flow for Google Workspace |
 
-**Step 1: Install & start Ollama**
-```bash
-# Download from https://ollama.com/download (macOS app)
-ollama pull llama3.1        # or gemma4:e4b if already installed
+---
+
+## 💳 SaaS Tier Metering & Monetization
+
+| Tier | Daily Emails | Monthly Disputes | Monthly Alerts | Price |
+|------|--------------|------------------|----------------|-------|
+| **Free** | 10 | 1 | 5 | ₹0 |
+| **Pro** | 50 | Unlimited | Unlimited | ₹299/mo |
+| **Enterprise** | Unlimited | Unlimited | Unlimited | Custom |
+
+> **Developer Control**: Use the sidebar toggle `🔒 Enforce Tier Quotas (Prod)` to test unlimited scans during development or enforce hard limits in production.
+
+---
+
+## 🧪 Test Coverage (56 Unit Tests)
+
+```
+tests/test_bank_parser.py       4 passed (UPI alerts, HDFC statement, masked accounts, multi-line tables)
+tests/test_pdf_statement.py     5 passed (encrypted PDF, wrong password, missing password, success, invalid)
+tests/test_email_adapters.py   16 passed (billing filter, mock inbox, quota enforcement, bank filter)
+tests/test_metering.py         15 passed (usage tracker, tiers, Bedrock cost estimator)
+tests/test_tools.py            16 passed (extract, baseline, anomaly detection, budget impact, disputes)
+======================== 56 passed in ~0.43s ✅ ========================
 ```
 
-**Step 2: Set up the project**
+---
+
+## 🚀 Quick Start
+
+### 1. Installation & Environment Setup
 ```bash
-cd BillWatchdog
+# Clone the repository
+git clone https://github.com/Thaiebu/bill-watchdog-agent-for-human-hackethon.git
+cd bill-watchdog-agent-for-human-hackethon/BillWatchdog
+
+# Create & activate virtual environment
+python3 -m venv ../venv
 source ../venv/bin/activate
+
+# Install dependencies (includes strands-agents, pypdf, fonttools)
 pip install -r requirements.txt
 pip install "strands-agents[ollama]"
 ```
 
-**Step 3: Seed the database**
+### 2. Seed Database
 ```bash
 python -c "from storage.seed_data import seed_all; seed_all()"
 ```
 
-**Step 4: Launch the UI**
+### 3. Run BillWatchdog Dashboard
 ```bash
+# Option A: With local Ollama (zero AWS credentials needed)
 USE_OLLAMA=1 streamlit run app.py
-```
 
-Open **http://localhost:8501** 🎉
-
----
-
-### Option B — With AWS Bedrock (Claude 3 Haiku)
-
-**Step 1: Get AWS credentials**
-1. Go to [console.aws.amazon.com](https://console.aws.amazon.com) → **IAM** → **Security credentials**
-2. Click **Create access key** → copy `Access Key ID` and `Secret Access Key`
-3. In **Amazon Bedrock** → **Model access** → enable **Claude 3 Haiku** (instant, free tier)
-
-**Step 2: Set credentials**
-```bash
-export AWS_ACCESS_KEY_ID="AKIA..."
-export AWS_SECRET_ACCESS_KEY="..."
+# Option B: With Amazon Bedrock Claude 3 Haiku
+export AWS_ACCESS_KEY_ID="your_key"
+export AWS_SECRET_ACCESS_KEY="your_secret"
 export AWS_DEFAULT_REGION="us-east-1"
-```
-
-**Step 3: Run**
-```bash
-cd BillWatchdog
-source ../venv/bin/activate
 streamlit run app.py
 ```
+Open your browser at **`http://localhost:8501`**.
 
 ---
 
-### Option C — Agent-only smoke test (no UI)
-
+## 🛡️ Pre-Commit Confidential Scanner
+To guarantee no API keys or passwords ever leak to GitHub:
 ```bash
-cd BillWatchdog
-source ../venv/bin/activate
+# Run manual scan across all project files
+python scripts/check_confidential.py
 
-# With Ollama
-USE_OLLAMA=1 python agent/strands_agent.py
-
-# With Bedrock (if creds set)
-python agent/strands_agent.py
+# Automatic hooks are pre-installed in .git/hooks/pre-commit and pre-push
 ```
 
 ---
 
-## 🧪 Run Tests
+## 🎬 3-Minute Demo Flow
 
-```bash
-cd BillWatchdog
-source ../venv/bin/activate
-python -m pytest tests/ -v
-# Expected: 44 passed in < 2s
-```
-
----
-
-## 🗂️ Project Structure
-
-```
-BillWatchdog/
-│
-├── app.py                      # Streamlit UI — 4 tabs: Budget / Bills / Email / Usage
-│
-├── agent/
-│   ├── strands_agent.py        # Core Strands Agent — auto-selects Ollama or Bedrock
-│   └── prompts.py              # System prompt with 6-step decision framework
-│
-├── tools/                      # 8 Strands @tool functions (pure, independently testable)
-│   ├── extractor_tool.py       # Tool 1: extract_invoice_entities
-│   ├── baseline_tool.py        # Tool 2: query_billing_baseline
-│   ├── anomaly_tool.py         # Tool 3: detect_bill_anomalies
-│   ├── budget_tool.py          # Tool 4: evaluate_budget_impact
-│   ├── dispute_tool.py         # Tool 5: draft_dispute_packet
-│   ├── scheduler_tool.py       # Tool 6: schedule_renewal_deadline
-│   ├── narrative_tool.py       # Tool 7: explain_spending_narrative
-│   └── email_tool.py           # Tool 8: fetch_billing_emails
-│
-├── inboxes/                    # Email Adapter Pattern
-│   ├── base_adapter.py         # Abstract EmailInboxAdapter ABC + get_adapter() factory
-│   ├── mock_adapter.py         # 20 synthetic billing emails (demo, no auth)
-│   ├── imap_adapter.py         # Real IMAP — Gmail/Outlook via App Password
-│   └── oauth2_gmail_adapter.py # Gmail API with OAuth2 (production ready)
-│
-├── metering/                   # Per-user SaaS usage tracking
-│   ├── usage_tracker.py        # SQLite event recording (email_scanned, bedrock_call …)
-│   ├── tier_engine.py          # Free / Pro / Enterprise quota enforcement
-│   └── cost_estimator.py       # AWS Bedrock cost per user (Claude 3 Haiku rates)
-│
-├── storage/
-│   ├── db.py                   # SQLite schema + CRUD (5 tables)
-│   └── seed_data.py            # 15 vendor baselines + 42 historical bills + 10 demo bills
-│
-├── deployment/
-│   ├── agentcore_app.py        # AgentCore HTTP handler (process_bill / scan_inbox / ask)
-│   └── agentcore.yaml          # Deployment config + Bedrock Guardrails
-│
-├── tests/
-│   ├── test_tools.py           # 13 tests — all 7 processing tools
-│   ├── test_email_adapters.py  # 16 tests — adapters, quota enforcement
-│   └── test_metering.py        # 15 tests — tiers, cost estimation
-│
-├── requirements.txt
-└── README.md
-```
+1. **Dashboard & Theme**: Toggle between **🌙 Dark Mode** and **☀️ Light Mode** via the top switch.
+2. **Encrypted Bank Statement PDF**:
+   - Select **"📤 Upload Bank Statement PDF"**.
+   - Upload any statement (or use mock password `IN1995`).
+   - Click **"🚀 Decrypt & Analyze Statement PDF"**.
+   - See the **2×2 Responsive KPI Grid** (`Total Debited`, `Total Credited`, `Net Cash Outflow`, `Rows`).
+   - Review the **🤖 Agent Executive Financial Audit** card and view the full transaction ledger with running balances.
+3. **Demo Bills (Silent Sentinel vs Action Required)**:
+   - Click **"🚀 Process All 10 Bills"**.
+   - Watch the agent silently archive 5 normal bills (zero notifications).
+   - Watch the agent flag 5 anomalies and generate vendor-specific dispute drafts in the **⚡ Action Center**.
+4. **Conversational Agent Reasoning**:
+   - In **💬 Ask BillWatchdog**, ask *"What changed most this month?"* or *"Summarize my bank statement"* for an instant narrative.
+5. **Usage & Monetization**:
+   - Open **📈 Usage & SaaS Metrics** to view token totals, Claude 3 Haiku AWS costs, and SaaS tier status.
+6. **Feature Matrix**:
+   - Open **✨ What's Built & Verified** for an interactive overview of all 4 architectural pillars.
 
 ---
 
-## 📊 Demo Test Data (10 Bills)
+## 🏆 Hackathon Submission Details
 
-### Silent Bills (no action needed)
-| # | Vendor | Amount | Why Silent |
-|---|--------|--------|-----------|
-| 1 | Netflix | ₹649 | Matches 6-month baseline exactly |
-| 2 | BESCOM Electricity | ₹2,850 | Within ±20% seasonal tolerance |
-| 3 | Spotify | ₹119 | Normal |
-| 4 | Airtel Broadband | ₹799 | Normal |
-| 5 | GitHub | ₹830 | Normal |
-
-### Action Required Bills (anomaly detected)
-| # | Vendor | Amount | Anomaly |
-|---|--------|--------|---------|
-| 6 | Figma | ₹1,999 | 🔺 +33% price hike (was ₹1,499) |
-| 7 | Jio Fiber | ₹1,499 | 🔺 +50% promo cliff (was ₹999) |
-| 8 | Hotstar | ₹1,499 | ⚠️ Annual auto-renewal surprise |
-| 9 | Airtel Broadband | ₹1,099 | 💰 Hidden infrastructure fee added |
-| 10 | Slack | ₹3,600 | 📈 Seat count crept up 8→12 |
-
----
-
-## 🏗️ Architecture
-
-```
-Email Inbox (Gmail / Outlook / Mock)
-        │  Adapter Pattern — swap providers without changing agent
-        ▼
-fetch_billing_emails()           ← Tool 8
-
-extract_invoice_entities()       ← Tool 1
-        │
-query_billing_baseline()         ← Tool 2  (reads SQLite history)
-        │
-detect_bill_anomalies()          ← Tool 3
-        │
-        ├── SILENT → archived to DB, user never notified
-        │
-        └── ACTION REQUIRED
-                ├── evaluate_budget_impact()     ← Tool 4
-                ├── draft_dispute_packet()        ← Tool 5
-                └── schedule_renewal_deadline()  ← Tool 6
-
-User query → explain_spending_narrative()        ← Tool 7
-```
-
-### Model Selection (auto-detected)
-
-```python
-# In agent/strands_agent.py — no code change needed:
-# Set USE_OLLAMA=1  → runs on local Ollama (gemma4:e4b or llama3.1)
-# Set AWS creds    → runs on Amazon Bedrock Claude 3 Haiku
-# Nothing set      → auto-falls back to Ollama
-```
-
----
-
-## 🔧 Environment Variables
-
-| Variable | Default | Purpose |
-|----------|---------|---------|
-| `USE_OLLAMA` | `""` | Set to `1` to force Ollama (skip Bedrock) |
-| `OLLAMA_HOST` | `http://localhost:11434` | Ollama server URL |
-| `OLLAMA_MODEL` | `gemma4:e4b` | Model ID for Ollama |
-| `BEDROCK_MODEL` | `anthropic.claude-3-haiku-20240307-v1:0` | Bedrock model ID |
-| `AWS_DEFAULT_REGION` | `us-east-1` | AWS region for Bedrock |
-| `AWS_ACCESS_KEY_ID` | — | AWS credential |
-| `AWS_SECRET_ACCESS_KEY` | — | AWS credential |
-
----
-
-## 🎬 Demo Walkthrough (3 minutes)
-
-1. **Dashboard tab** — See budget overview: categories, spend vs. limit, Safe-to-Spend
-2. **Process All 10 Bills** → Watch: 5 silent, 5 action alerts with full reasoning
-3. **Action Center** → Open Slack dispute draft → review vendor-specific email → "Send"
-4. **Email Inbox tab** → Select "Mock Demo Inbox" → "Scan Inbox" → 20 emails auto-processed
-5. **Ask Agent** → Type `"What changed most this month?"` → spending narrative with real ₹ numbers
-6. **Usage tab** → SaaS tier, email quota remaining, estimated AWS cost per run
-
----
-
-## 🏆 Hackathon
-
-**Track**: Everyday Agents
-**Hackathon**: Agents for Humans — [agentsforhumans.devpost.com](https://agentsforhumans.devpost.com)
-**Deadline**: September 14, 2026 at 8:00 PM EDT (Sep 15 at 5:30 AM IST)
-
-**AWS Services Used**:
-- Amazon Bedrock — Claude 3 Haiku (LLM reasoning + tool calling)
-- Amazon Bedrock AgentCore — Agent hosting runtime
-- Amazon Bedrock Guardrails — Financial content policy enforcement
-- SQLite (local) — Bill history, usage metering (DynamoDB-ready for production)
+* **Hackathon**: Agents for Humans — [agentsforhumans.devpost.com](https://agentsforhumans.devpost.com)
+* **Track**: Everyday Agents
+* **Submission Package**: Detailed in `devpost_submission.md`
+* **Repository**: [github.com/Thaiebu/bill-watchdog-agent-for-human-hackethon](https://github.com/Thaiebu/bill-watchdog-agent-for-human-hackethon)
+* **AWS Services**: Amazon Bedrock Claude 3 Haiku · AWS Strands Agents SDK · Bedrock AgentCore
