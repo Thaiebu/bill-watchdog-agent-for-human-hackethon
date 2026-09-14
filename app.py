@@ -70,6 +70,18 @@ def get_theme_styles(theme: str) -> str:
         input_text = "#f8fafc"
         expander_bg = "#0f172a"
         metric_val_color = "#ffffff"
+        caption_color = "#94a3b8"
+        radio_text_color = "#f8fafc"
+        dropzone_bg = "#131b2e"
+        dropzone_border = "rgba(99, 102, 241, 0.5)"
+        dropzone_btn_bg = "#1e293b"
+        dropzone_btn_border = "#475569"
+        dropzone_btn_text = "#ffffff"
+        dropzone_svg = "#818cf8"
+        btn_primary_bg = "linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)"
+        btn_sec_bg = "#1e293b"
+        btn_sec_border = "#334155"
+        btn_sec_text = "#f8fafc"
     else:
         bg_app = "#f8fafc"
         text_color = "#0f172a"
@@ -94,213 +106,60 @@ def get_theme_styles(theme: str) -> str:
         input_text = "#0f172a"
         expander_bg = "#ffffff"
         metric_val_color = "#0f172a"
+        caption_color = "#475569"
+        radio_text_color = "#0f172a"
+        dropzone_bg = "#f8fafc"
+        dropzone_border = "#cbd5e1"
+        dropzone_btn_bg = "#ffffff"
+        dropzone_btn_border = "#cbd5e1"
+        dropzone_btn_text = "#0f172a"
+        dropzone_svg = "#4f46e5"
+        btn_primary_bg = "linear-gradient(135deg, #4f46e5 0%, #4338ca 100%)"
+        btn_sec_bg = "#ffffff"
+        btn_sec_border = "#cbd5e1"
+        btn_sec_text = "#0f172a"
 
-    if is_dark:
-        btn_rules = """
-    /* File Uploader Dropzone (Dark) */
-    [data-testid="stFileUploader"] {
-        background-color: transparent !important;
-    }
-    [data-testid="stFileUploaderDropzone"] {
-        background-color: #131b2e !important;
-        border: 2px dashed rgba(99, 102, 241, 0.5) !important;
-        border-radius: 12px !important;
-        color: #f8fafc !important;
-    }
-    [data-testid="stFileUploaderDropzone"]:hover {
-        border-color: #818cf8 !important;
-        background-color: #1a233a !important;
-    }
-    [data-testid="stFileUploaderDropzone"] svg,
-    [data-testid="stFileUploaderDropzone"] svg * {
-        fill: #818cf8 !important;
-        stroke: #818cf8 !important;
-        color: #818cf8 !important;
-    }
-    [data-testid="stFileUploaderDropzoneInstructions"] div,
-    [data-testid="stFileUploaderDropzoneInstructions"] span,
-    [data-testid="stFileUploaderDropzoneInstructions"] small {
-        color: #cbd5e1 !important;
-        font-weight: 500 !important;
-    }
-    /* "Browse files" button inside dropzone (Dark) */
-    [data-testid="stFileUploaderDropzone"] button,
-    [data-testid="stFileUploaderDropzone"] [data-testid="stBaseButton-secondary"] {
-        background-color: #1e293b !important;
-        border: 1px solid #475569 !important;
-        color: #ffffff !important;
-        border-radius: 8px !important;
-        font-weight: 600 !important;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.3) !important;
-    }
-    [data-testid="stFileUploaderDropzone"] button *,
-    [data-testid="stFileUploaderDropzone"] [data-testid="stBaseButton-secondary"] * {
-        color: #ffffff !important;
-        fill: #ffffff !important;
-    }
-    [data-testid="stFileUploaderDropzone"] button:hover {
-        background-color: #334155 !important;
-        border-color: #818cf8 !important;
-        color: #ffffff !important;
-    }
-    [data-testid="stUploadedFile"] {
-        background-color: #1e293b !important;
-        border: 1px solid #334155 !important;
-        border-radius: 8px !important;
-        color: #f8fafc !important;
-    }
-    [data-testid="stUploadedFile"] * {
-        color: #f8fafc !important;
-    }
-
-    /* Primary Buttons (Dark) */
-    button[kind="primary"],
-    [data-testid="stBaseButton-primary"] {
-        background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%) !important;
-        color: #ffffff !important;
-        border: none !important;
-        border-radius: 8px !important;
-        font-weight: 700 !important;
-        box-shadow: 0 4px 14px rgba(79, 70, 229, 0.4) !important;
-    }
-    button[kind="primary"] *,
-    [data-testid="stBaseButton-primary"] * {
-        color: #ffffff !important;
-        fill: #ffffff !important;
-    }
-    button[kind="primary"]:hover,
-    [data-testid="stBaseButton-primary"]:hover {
-        background: linear-gradient(135deg, #4338ca 0%, #4f46e5 100%) !important;
-        color: #ffffff !important;
-        box-shadow: 0 6px 20px rgba(79, 70, 229, 0.6) !important;
-    }
-
-    /* Secondary Buttons (Dark) */
-    button[kind="secondary"],
-    [data-testid="stBaseButton-secondary"] {
-        background-color: #1e293b !important;
-        color: #f8fafc !important;
-        border: 1px solid #334155 !important;
-        border-radius: 8px !important;
-    }
-    button[kind="secondary"] *,
-    [data-testid="stBaseButton-secondary"] * {
-        color: #f8fafc !important;
-    }
-"""
-    else:
-        btn_rules = """
-    /* File Uploader Dropzone (Light) */
-    [data-testid="stFileUploader"] {
-        background-color: transparent !important;
-    }
-    [data-testid="stFileUploaderDropzone"] {
-        background-color: #f8fafc !important;
-        border: 2px dashed #cbd5e1 !important;
-        border-radius: 12px !important;
-        color: #0f172a !important;
-    }
-    [data-testid="stFileUploaderDropzone"]:hover {
-        border-color: #4f46e5 !important;
-        background-color: #f1f5f9 !important;
-    }
-    [data-testid="stFileUploaderDropzone"] svg,
-    [data-testid="stFileUploaderDropzone"] svg * {
-        fill: #4f46e5 !important;
-        stroke: #4f46e5 !important;
-        color: #4f46e5 !important;
-    }
-    [data-testid="stFileUploaderDropzoneInstructions"] div,
-    [data-testid="stFileUploaderDropzoneInstructions"] span,
-    [data-testid="stFileUploaderDropzoneInstructions"] small {
-        color: #475569 !important;
-        font-weight: 500 !important;
-    }
-    /* "Browse files" button inside dropzone (Light) */
-    [data-testid="stFileUploaderDropzone"] button,
-    [data-testid="stFileUploaderDropzone"] [data-testid="stBaseButton-secondary"] {
-        background-color: #ffffff !important;
-        border: 1px solid #cbd5e1 !important;
-        color: #0f172a !important;
-        border-radius: 8px !important;
-        font-weight: 600 !important;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.05) !important;
-    }
-    [data-testid="stFileUploaderDropzone"] button *,
-    [data-testid="stFileUploaderDropzone"] [data-testid="stBaseButton-secondary"] * {
-        color: #0f172a !important;
-        fill: #0f172a !important;
-    }
-    [data-testid="stFileUploaderDropzone"] button:hover {
-        background-color: #f8fafc !important;
-        border-color: #4f46e5 !important;
-        color: #4f46e5 !important;
-    }
-    [data-testid="stUploadedFile"] {
-        background-color: #ffffff !important;
-        border: 1px solid #e2e8f0 !important;
-        border-radius: 8px !important;
-        color: #0f172a !important;
-    }
-    [data-testid="stUploadedFile"] * {
-        color: #0f172a !important;
-    }
-
-    /* Primary Buttons (Light) */
-    button[kind="primary"],
-    [data-testid="stBaseButton-primary"] {
-        background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%) !important;
-        color: #ffffff !important;
-        border: none !important;
-        border-radius: 8px !important;
-        font-weight: 700 !important;
-        box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3) !important;
-    }
-    button[kind="primary"] *,
-    [data-testid="stBaseButton-primary"] * {
-        color: #ffffff !important;
-        fill: #ffffff !important;
-    }
-    button[kind="primary"]:hover,
-    [data-testid="stBaseButton-primary"]:hover {
-        background: linear-gradient(135deg, #3730a3 0%, #4338ca 100%) !important;
-        color: #ffffff !important;
-    }
-
-    /* Secondary Buttons (Light) */
-    button[kind="secondary"],
-    [data-testid="stBaseButton-secondary"] {
-        background-color: #ffffff !important;
-        color: #0f172a !important;
-        border: 1px solid #cbd5e1 !important;
-        border-radius: 8px !important;
-    }
-    button[kind="secondary"] *,
-    [data-testid="stBaseButton-secondary"] * {
-        color: #0f172a !important;
-    }
-"""
-
-    return f"""
+    template = """
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
     /* Global Theme */
     .stApp {
-        background-color: {bg_app} !important;
-        color: {text_color} !important;
+        background-color: __BG_APP__ !important;
+        color: __TEXT_COLOR__ !important;
         font-family: 'Inter', sans-serif;
     }
     [data-testid="stHeader"] { background: transparent; }
     .block-container { padding: 1rem 2rem !important; max-width: 1400px; }
 
-    /* Headings & Text */
+    /* Headings, Labels & Captions */
     h1, h2, h3, h4, h5, h6, label {
-        color: {text_color} !important;
+        color: __TEXT_COLOR__ !important;
+    }
+    .stCaption, [data-testid="stCaptionContainer"] p, [data-testid="stCaptionContainer"] {
+        color: __CAPTION_COLOR__ !important;
+    }
+    p, span {
+        color: __TEXT_COLOR__;
+    }
+
+    /* Radio Buttons High Contrast */
+    div[data-testid="stRadio"] label,
+    div[data-testid="stRadio"] p,
+    div[data-testid="stRadio"] span,
+    div[data-testid="stRadio"] div,
+    div[data-testid="stRadio"] [data-testid="stMarkdownContainer"] p {
+        color: __RADIO_TEXT_COLOR__ !important;
+        font-weight: 500 !important;
+    }
+    div[data-testid="stRadio"] div[role="radiogroup"] label:hover p,
+    div[data-testid="stRadio"] div[role="radiogroup"] label:hover span {
+        color: #818cf8 !important;
     }
 
     /* Hero Header */
     .hero-header {
-        background: {hero_bg} !important;
+        background: __HERO_BG__ !important;
         padding: 1.5rem 2rem;
         border-radius: 16px;
         margin-bottom: 0.5rem;
@@ -316,7 +175,7 @@ def get_theme_styles(theme: str) -> str:
         letter-spacing: -0.5px;
     }
     .hero-subtitle {
-        color: {hero_subtitle} !important;
+        color: __HERO_SUBTITLE__ !important;
         font-size: 0.9rem;
         font-weight: 400;
         margin-top: 4px;
@@ -333,22 +192,22 @@ def get_theme_styles(theme: str) -> str:
 
     /* Cards */
     .metric-card {
-        background: {card_bg} !important;
-        border: 1px solid {card_border} !important;
+        background: __CARD_BG__ !important;
+        border: 1px solid __CARD_BORDER__ !important;
         border-radius: 14px;
         padding: 1.2rem;
         margin-bottom: 0.8rem;
-        box-shadow: {card_shadow};
+        box-shadow: __CARD_SHADOW__;
     }
     .metric-label {
-        color: {text_muted} !important;
+        color: __TEXT_MUTED__ !important;
         font-size: 0.75rem;
         text-transform: uppercase;
         letter-spacing: 1px;
         font-weight: 600;
     }
     .metric-value {
-        color: {metric_val_color} !important;
+        color: __METRIC_VAL_COLOR__ !important;
         font-size: 1.6rem;
         font-weight: 700;
         margin-top: 4px;
@@ -373,21 +232,21 @@ def get_theme_styles(theme: str) -> str:
 
     /* Event Stream */
     .event-stream {
-        background: {event_bg} !important;
-        border: 1px solid {event_border} !important;
+        background: __EVENT_BG__ !important;
+        border: 1px solid __EVENT_BORDER__ !important;
         border-radius: 12px;
         padding: 1rem;
         font-family: 'JetBrains Mono', 'Fira Code', monospace;
         font-size: 0.78rem;
         max-height: 480px;
         overflow-y: auto;
-        color: {event_text} !important;
+        color: __EVENT_TEXT__ !important;
     }
     .event-line {
         padding: 3px 0;
         border-bottom: 1px solid rgba(128,128,128,0.1);
     }
-    .event-time { color: {event_time} !important; }
+    .event-time { color: __EVENT_TIME__ !important; }
     .event-tool { color: #6366f1 !important; font-weight: 600; }
     .event-ok { color: #10b981 !important; }
     .event-warn { color: #f59e0b !important; }
@@ -395,64 +254,145 @@ def get_theme_styles(theme: str) -> str:
 
     /* Alert Card */
     .alert-card {
-        background: {alert_bg} !important;
+        background: __ALERT_BG__ !important;
         border-left: 4px solid #ef4444 !important;
-        border: 1px solid {card_border};
+        border: 1px solid __CARD_BORDER__;
         border-radius: 10px;
         padding: 1rem 1.2rem;
         margin-bottom: 0.8rem;
     }
     .alert-card.silent {
         border-left-color: #10b981 !important;
-        background: {alert_silent_bg} !important;
+        background: __ALERT_SILENT_BG__ !important;
     }
     .alert-merchant {
-        color: {text_color} !important;
+        color: __TEXT_COLOR__ !important;
         font-weight: 700;
         font-size: 1rem;
     }
     .alert-detail {
-        color: {alert_detail} !important;
+        color: __ALERT_DETAIL__ !important;
         font-size: 0.82rem;
         margin-top: 4px;
     }
 
     /* Dispute Box */
     .dispute-box {
-        background: {dispute_bg} !important;
-        border: 1px solid {dispute_border} !important;
+        background: __DISPUTE_BG__ !important;
+        border: 1px solid __DISPUTE_BORDER__ !important;
         border-radius: 10px;
         padding: 1rem;
         margin-top: 0.5rem;
     }
     .dispute-box pre {
-        color: {dispute_text} !important;
+        color: __DISPUTE_TEXT__ !important;
         white-space: pre-wrap;
         word-wrap: break-word;
         font-size: 0.78rem;
     }
 
-    {btn_rules}
+    /* File Uploader Dropzone */
+    [data-testid="stFileUploader"] {
+        background-color: transparent !important;
+    }
+    [data-testid="stFileUploaderDropzone"] {
+        background-color: __DROPZONE_BG__ !important;
+        border: 2px dashed __DROPZONE_BORDER__ !important;
+        border-radius: 12px !important;
+        color: __TEXT_COLOR__ !important;
+    }
+    [data-testid="stFileUploaderDropzone"]:hover {
+        border-color: #6366f1 !important;
+    }
+    [data-testid="stFileUploaderDropzone"] svg,
+    [data-testid="stFileUploaderDropzone"] svg * {
+        fill: __DROPZONE_SVG__ !important;
+        stroke: __DROPZONE_SVG__ !important;
+        color: __DROPZONE_SVG__ !important;
+    }
+    [data-testid="stFileUploaderDropzoneInstructions"] div,
+    [data-testid="stFileUploaderDropzoneInstructions"] span,
+    [data-testid="stFileUploaderDropzoneInstructions"] small {
+        color: __CAPTION_COLOR__ !important;
+        font-weight: 500 !important;
+    }
+    /* Browse files button inside dropzone */
+    [data-testid="stFileUploaderDropzone"] button,
+    [data-testid="stFileUploaderDropzone"] [data-testid="stBaseButton-secondary"] {
+        background-color: __DROPZONE_BTN_BG__ !important;
+        border: 1px solid __DROPZONE_BTN_BORDER__ !important;
+        color: __DROPZONE_BTN_TEXT__ !important;
+        border-radius: 8px !important;
+        font-weight: 600 !important;
+    }
+    [data-testid="stFileUploaderDropzone"] button *,
+    [data-testid="stFileUploaderDropzone"] [data-testid="stBaseButton-secondary"] * {
+        color: __DROPZONE_BTN_TEXT__ !important;
+        fill: __DROPZONE_BTN_TEXT__ !important;
+    }
 
-    /* Streamlit Form Widgets */
+    /* Uploaded File preview pill */
+    [data-testid="stUploadedFile"] {
+        background-color: __CARD_BG__ !important;
+        border: 1px solid __CARD_BORDER__ !important;
+        border-radius: 8px !important;
+        color: __TEXT_COLOR__ !important;
+    }
+    [data-testid="stUploadedFile"] * {
+        color: __TEXT_COLOR__ !important;
+    }
+
+    /* Primary Buttons */
+    button[kind="primary"],
+    [data-testid="stBaseButton-primary"] {
+        background: __BTN_PRIMARY_BG__ !important;
+        color: #ffffff !important;
+        border: none !important;
+        border-radius: 8px !important;
+        font-weight: 700 !important;
+        box-shadow: 0 4px 14px rgba(79, 70, 229, 0.4) !important;
+    }
+    button[kind="primary"] *,
+    [data-testid="stBaseButton-primary"] * {
+        color: #ffffff !important;
+        fill: #ffffff !important;
+    }
+
+    /* Secondary Buttons */
+    button[kind="secondary"],
+    [data-testid="stBaseButton-secondary"] {
+        background-color: __BTN_SEC_BG__ !important;
+        color: __BTN_SEC_TEXT__ !important;
+        border: 1px solid __BTN_SEC_BORDER__ !important;
+        border-radius: 8px !important;
+    }
+    button[kind="secondary"] *,
+    [data-testid="stBaseButton-secondary"] * {
+        color: __BTN_SEC_TEXT__ !important;
+    }
+
+    /* Streamlit Form Inputs */
     div[data-baseweb="input"] > div {
-        background-color: {input_bg} !important;
-        border-color: {input_border} !important;
-        color: {input_text} !important;
+        background-color: __INPUT_BG__ !important;
+        border-color: __INPUT_BORDER__ !important;
+        color: __INPUT_TEXT__ !important;
+    }
+    div[data-baseweb="input"] input {
+        color: __INPUT_TEXT__ !important;
     }
     div[data-baseweb="select"] > div {
-        background-color: {input_bg} !important;
-        border-color: {input_border} !important;
-        color: {input_text} !important;
+        background-color: __INPUT_BG__ !important;
+        border-color: __INPUT_BORDER__ !important;
+        color: __INPUT_TEXT__ !important;
     }
     div[data-testid="stExpander"] {
-        background-color: {expander_bg} !important;
-        border: 1px solid {card_border} !important;
+        background-color: __EXPANDER_BG__ !important;
+        border: 1px solid __CARD_BORDER__ !important;
         border-radius: 10px !important;
     }
     div[data-testid="stSidebar"] {
-        background-color: {card_bg} !important;
-        border-right: 1px solid {card_border} !important;
+        background-color: __CARD_BG__ !important;
+        border-right: 1px solid __CARD_BORDER__ !important;
     }
 
     /* Hide Streamlit Branding */
@@ -460,7 +400,48 @@ def get_theme_styles(theme: str) -> str:
     footer {visibility: hidden;}
     [data-testid="stToolbar"] {visibility: hidden;}
 </style>
-"""
+    """
+    replacements = {
+        "__BG_APP__": bg_app,
+        "__TEXT_COLOR__": text_color,
+        "__TEXT_MUTED__": text_muted,
+        "__CAPTION_COLOR__": caption_color,
+        "__RADIO_TEXT_COLOR__": radio_text_color,
+        "__HERO_BG__": hero_bg,
+        "__HERO_SUBTITLE__": hero_subtitle,
+        "__CARD_BG__": card_bg,
+        "__CARD_BORDER__": card_border,
+        "__CARD_SHADOW__": card_shadow,
+        "__EVENT_BG__": event_bg,
+        "__EVENT_BORDER__": event_border,
+        "__EVENT_TEXT__": event_text,
+        "__EVENT_TIME__": event_time,
+        "__ALERT_BG__": alert_bg,
+        "__ALERT_SILENT_BG__": alert_silent_bg,
+        "__ALERT_DETAIL__": alert_detail,
+        "__DISPUTE_BG__": dispute_bg,
+        "__DISPUTE_BORDER__": dispute_border,
+        "__DISPUTE_TEXT__": dispute_text,
+        "__DROPZONE_BG__": dropzone_bg,
+        "__DROPZONE_BORDER__": dropzone_border,
+        "__DROPZONE_BTN_BG__": dropzone_btn_bg,
+        "__DROPZONE_BTN_BORDER__": dropzone_btn_border,
+        "__DROPZONE_BTN_TEXT__": dropzone_btn_text,
+        "__DROPZONE_SVG__": dropzone_svg,
+        "__BTN_PRIMARY_BG__": btn_primary_bg,
+        "__BTN_SEC_BG__": btn_sec_bg,
+        "__BTN_SEC_BORDER__": btn_sec_border,
+        "__BTN_SEC_TEXT__": btn_sec_text,
+        "__INPUT_BG__": input_bg,
+        "__INPUT_BORDER__": input_border,
+        "__INPUT_TEXT__": input_text,
+        "__EXPANDER_BG__": expander_bg,
+        "__METRIC_VAL_COLOR__": metric_val_color,
+    }
+    for k, v in replacements.items():
+        template = template.replace(k, v)
+    return template
+
 
 st.markdown(get_theme_styles(st.session_state.theme), unsafe_allow_html=True)
 
