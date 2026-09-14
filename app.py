@@ -429,44 +429,46 @@ with left_col:
 with right_col:
     # ── Bill Processing Controls ──
     st.markdown("### 🧾 Process Bills & Statements")
-    tab_demo, tab_upload = st.tabs(["⚡ Demo Bills (10)", "📤 Upload Bank PDF"])
 
-    with tab_upload:
-        st.markdown("##### 📤 Upload Monthly Bank Statement PDF")
-        st.caption("Upload a statement PDF (HDFC, ICICI, SBI, IndusInd, etc.). If password-protected, BillWatchdog decrypts it in-memory with zero-storage privacy.")
+    # High-visibility segmented control
+    input_mode = st.radio(
+        "Choose Bill Source:",
+        ["📤 Upload Bank Statement PDF", "⚡ Demo Bills (10 Pre-loaded)"],
+        horizontal=True,
+        key="main_bill_input_mode",
+    )
+
+    if input_mode == "📤 Upload Bank Statement PDF":
+        st.markdown("##### 📄 Direct Bank Statement PDF Analysis")
+        st.caption("Upload any monthly e-Statement PDF (HDFC, ICICI, SBI, IndusInd, Axis, etc.). If password-protected, enter the password below.")
 
         uploaded_pdf = st.file_uploader(
             "Choose Statement PDF",
             type=["pdf"],
-            key="statement_pdf_uploader",
-            help="Your file is processed 100% locally in volatile RAM"
+            key="visible_statement_pdf_uploader",
+            help="Your PDF is processed strictly in volatile memory"
         )
 
-        if uploaded_pdf is not None:
-            pdf_bytes = uploaded_pdf.read()
-            from tools.pdf_statement_tool import inspect_pdf_bytes, decrypt_and_extract_statement
-            pdf_info = inspect_pdf_bytes(pdf_bytes)
+        upload_pwd = st.text_input(
+            "Statement Password (if encrypted)",
+            type="password",
+            placeholder="e.g. IN1995, PAN (ABCD1234E), or DOB (DDMM)",
+            key="visible_upload_pdf_pwd",
+            help="🛡️ Zero-Storage Privacy: The password is NEVER saved to disk, SQLite, or logs."
+        )
 
-            is_enc = pdf_info.get("is_encrypted", False)
-            if is_enc:
-                st.warning("🔒 **Password-Protected Statement Detected**")
-                st.caption("Common bank formats: PAN (uppercase) or First 4 letters of name + DOB (DDMM)")
-                upload_pwd = st.text_input(
-                    "Statement Password",
-                    type="password",
-                    placeholder="e.g. IN1995 or ABCD1234E",
-                    key="upload_pdf_pwd_input",
-                    help="Never saved to database, logs, or disk."
-                )
+        if st.button("🚀 Decrypt & Analyze Statement PDF", type="primary", use_container_width=True, key="btn_analyze_uploaded_pdf"):
+            if uploaded_pdf is None:
+                st.error("⚠️ Please select or drop a PDF statement file first.")
             else:
-                st.info("📄 PDF is unencrypted. Ready to analyze.")
-                upload_pwd = ""
+                pdf_bytes = uploaded_pdf.read()
+                from tools.pdf_statement_tool import inspect_pdf_bytes, decrypt_and_extract_statement
+                pdf_info = inspect_pdf_bytes(pdf_bytes)
 
-            if st.button("🚀 Decrypt & Analyze Statement", type="primary", use_container_width=True, key="analyze_uploaded_pdf_btn"):
-                if is_enc and not upload_pwd:
-                    st.error("Please enter the statement password to decrypt.")
+                if pdf_info.get("is_encrypted") and not upload_pwd:
+                    st.error("🔒 This bank statement is password-protected. Please enter the password above.")
                 else:
-                    with st.spinner("Decrypting in-memory & running through 6-tool pipeline..."):
+                    with st.spinner("Decrypting in-memory & running 6-tool BillWatchdog pipeline..."):
                         dec_result = decrypt_and_extract_statement(pdf_bytes, password=upload_pwd)
                         if not dec_result.get("success"):
                             st.error(f"❌ {dec_result.get('error', 'Failed to extract statement')}")
@@ -534,7 +536,8 @@ with right_col:
                             time.sleep(0.5)
                             st.rerun()
 
-    with tab_demo:
+    else:
+        # ── Demo Bills Mode ──
         selected = st.selectbox(
             "Select a demo bill to process:",
             [b["label"] for b in DEMO_BILLS],
@@ -920,7 +923,7 @@ with tab_email:
                                 "1. Make sure **2-Step Verification** is turned ON in your Google Account.\n"
                                 "2. Visit: [https://myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords)\n"
                                 "3. Type `BillWatchdog` as the app name and click **Create**.\n"
-                                "4. Copy the generated 16-character code (e.g. `abcd efgh ijkl mnop`) and paste it into the **App Password** box above."
+                                "4. Copy the generated 16-character code (e.g. `xxxx xxxx xxxx xxxx`) and paste it into the **App Password** box above."
                             )
 
 

@@ -61,7 +61,7 @@ class IMAPEmailAdapter(EmailInboxAdapter):
     def _connect(self) -> imaplib.IMAP4_SSL:
         try:
             mail = imaplib.IMAP4_SSL(self.imap_host, self.imap_port)
-            # Remove any spaces that user might have copied from Google UI (e.g. "abcd efgh ijkl mnop")
+            # Remove any spaces that user might have copied from Google UI (e.g. "xxxx xxxx xxxx xxxx")
             clean_password = self.app_password.replace(" ", "").strip()
             mail.login(self.email_address.strip(), clean_password)
             return mail
