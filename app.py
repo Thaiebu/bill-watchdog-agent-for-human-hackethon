@@ -95,26 +95,211 @@ def get_theme_styles(theme: str) -> str:
         expander_bg = "#ffffff"
         metric_val_color = "#0f172a"
 
+    if is_dark:
+        btn_rules = """
+    /* File Uploader Dropzone (Dark) */
+    [data-testid="stFileUploader"] {
+        background-color: transparent !important;
+    }
+    [data-testid="stFileUploaderDropzone"] {
+        background-color: #131b2e !important;
+        border: 2px dashed rgba(99, 102, 241, 0.5) !important;
+        border-radius: 12px !important;
+        color: #f8fafc !important;
+    }
+    [data-testid="stFileUploaderDropzone"]:hover {
+        border-color: #818cf8 !important;
+        background-color: #1a233a !important;
+    }
+    [data-testid="stFileUploaderDropzone"] svg,
+    [data-testid="stFileUploaderDropzone"] svg * {
+        fill: #818cf8 !important;
+        stroke: #818cf8 !important;
+        color: #818cf8 !important;
+    }
+    [data-testid="stFileUploaderDropzoneInstructions"] div,
+    [data-testid="stFileUploaderDropzoneInstructions"] span,
+    [data-testid="stFileUploaderDropzoneInstructions"] small {
+        color: #cbd5e1 !important;
+        font-weight: 500 !important;
+    }
+    /* "Browse files" button inside dropzone (Dark) */
+    [data-testid="stFileUploaderDropzone"] button,
+    [data-testid="stFileUploaderDropzone"] [data-testid="stBaseButton-secondary"] {
+        background-color: #1e293b !important;
+        border: 1px solid #475569 !important;
+        color: #ffffff !important;
+        border-radius: 8px !important;
+        font-weight: 600 !important;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3) !important;
+    }
+    [data-testid="stFileUploaderDropzone"] button *,
+    [data-testid="stFileUploaderDropzone"] [data-testid="stBaseButton-secondary"] * {
+        color: #ffffff !important;
+        fill: #ffffff !important;
+    }
+    [data-testid="stFileUploaderDropzone"] button:hover {
+        background-color: #334155 !important;
+        border-color: #818cf8 !important;
+        color: #ffffff !important;
+    }
+    [data-testid="stUploadedFile"] {
+        background-color: #1e293b !important;
+        border: 1px solid #334155 !important;
+        border-radius: 8px !important;
+        color: #f8fafc !important;
+    }
+    [data-testid="stUploadedFile"] * {
+        color: #f8fafc !important;
+    }
+
+    /* Primary Buttons (Dark) */
+    button[kind="primary"],
+    [data-testid="stBaseButton-primary"] {
+        background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%) !important;
+        color: #ffffff !important;
+        border: none !important;
+        border-radius: 8px !important;
+        font-weight: 700 !important;
+        box-shadow: 0 4px 14px rgba(79, 70, 229, 0.4) !important;
+    }
+    button[kind="primary"] *,
+    [data-testid="stBaseButton-primary"] * {
+        color: #ffffff !important;
+        fill: #ffffff !important;
+    }
+    button[kind="primary"]:hover,
+    [data-testid="stBaseButton-primary"]:hover {
+        background: linear-gradient(135deg, #4338ca 0%, #4f46e5 100%) !important;
+        color: #ffffff !important;
+        box-shadow: 0 6px 20px rgba(79, 70, 229, 0.6) !important;
+    }
+
+    /* Secondary Buttons (Dark) */
+    button[kind="secondary"],
+    [data-testid="stBaseButton-secondary"] {
+        background-color: #1e293b !important;
+        color: #f8fafc !important;
+        border: 1px solid #334155 !important;
+        border-radius: 8px !important;
+    }
+    button[kind="secondary"] *,
+    [data-testid="stBaseButton-secondary"] * {
+        color: #f8fafc !important;
+    }
+"""
+    else:
+        btn_rules = """
+    /* File Uploader Dropzone (Light) */
+    [data-testid="stFileUploader"] {
+        background-color: transparent !important;
+    }
+    [data-testid="stFileUploaderDropzone"] {
+        background-color: #f8fafc !important;
+        border: 2px dashed #cbd5e1 !important;
+        border-radius: 12px !important;
+        color: #0f172a !important;
+    }
+    [data-testid="stFileUploaderDropzone"]:hover {
+        border-color: #4f46e5 !important;
+        background-color: #f1f5f9 !important;
+    }
+    [data-testid="stFileUploaderDropzone"] svg,
+    [data-testid="stFileUploaderDropzone"] svg * {
+        fill: #4f46e5 !important;
+        stroke: #4f46e5 !important;
+        color: #4f46e5 !important;
+    }
+    [data-testid="stFileUploaderDropzoneInstructions"] div,
+    [data-testid="stFileUploaderDropzoneInstructions"] span,
+    [data-testid="stFileUploaderDropzoneInstructions"] small {
+        color: #475569 !important;
+        font-weight: 500 !important;
+    }
+    /* "Browse files" button inside dropzone (Light) */
+    [data-testid="stFileUploaderDropzone"] button,
+    [data-testid="stFileUploaderDropzone"] [data-testid="stBaseButton-secondary"] {
+        background-color: #ffffff !important;
+        border: 1px solid #cbd5e1 !important;
+        color: #0f172a !important;
+        border-radius: 8px !important;
+        font-weight: 600 !important;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.05) !important;
+    }
+    [data-testid="stFileUploaderDropzone"] button *,
+    [data-testid="stFileUploaderDropzone"] [data-testid="stBaseButton-secondary"] * {
+        color: #0f172a !important;
+        fill: #0f172a !important;
+    }
+    [data-testid="stFileUploaderDropzone"] button:hover {
+        background-color: #f8fafc !important;
+        border-color: #4f46e5 !important;
+        color: #4f46e5 !important;
+    }
+    [data-testid="stUploadedFile"] {
+        background-color: #ffffff !important;
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 8px !important;
+        color: #0f172a !important;
+    }
+    [data-testid="stUploadedFile"] * {
+        color: #0f172a !important;
+    }
+
+    /* Primary Buttons (Light) */
+    button[kind="primary"],
+    [data-testid="stBaseButton-primary"] {
+        background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%) !important;
+        color: #ffffff !important;
+        border: none !important;
+        border-radius: 8px !important;
+        font-weight: 700 !important;
+        box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3) !important;
+    }
+    button[kind="primary"] *,
+    [data-testid="stBaseButton-primary"] * {
+        color: #ffffff !important;
+        fill: #ffffff !important;
+    }
+    button[kind="primary"]:hover,
+    [data-testid="stBaseButton-primary"]:hover {
+        background: linear-gradient(135deg, #3730a3 0%, #4338ca 100%) !important;
+        color: #ffffff !important;
+    }
+
+    /* Secondary Buttons (Light) */
+    button[kind="secondary"],
+    [data-testid="stBaseButton-secondary"] {
+        background-color: #ffffff !important;
+        color: #0f172a !important;
+        border: 1px solid #cbd5e1 !important;
+        border-radius: 8px !important;
+    }
+    button[kind="secondary"] *,
+    [data-testid="stBaseButton-secondary"] * {
+        color: #0f172a !important;
+    }
+"""
+
     return f"""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-
     /* Global Theme */
-    .stApp {{
+    .stApp {
         background-color: {bg_app} !important;
         color: {text_color} !important;
         font-family: 'Inter', sans-serif;
-    }}
-    [data-testid="stHeader"] {{ background: transparent; }}
-    .block-container {{ padding: 1rem 2rem !important; max-width: 1400px; }}
+    }
+    [data-testid="stHeader"] { background: transparent; }
+    .block-container { padding: 1rem 2rem !important; max-width: 1400px; }
 
     /* Headings & Text */
-    h1, h2, h3, h4, h5, h6, label {{
+    h1, h2, h3, h4, h5, h6, label {
         color: {text_color} !important;
-    }}
+    }
 
     /* Hero Header */
-    .hero-header {{
+    .hero-header {
         background: {hero_bg} !important;
         padding: 1.5rem 2rem;
         border-radius: 16px;
@@ -123,20 +308,20 @@ def get_theme_styles(theme: str) -> str:
         align-items: center;
         justify-content: space-between;
         box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-    }}
-    .hero-title {{
+    }
+    .hero-title {
         color: #fff !important;
         font-size: 1.8rem;
         font-weight: 800;
         letter-spacing: -0.5px;
-    }}
-    .hero-subtitle {{
+    }
+    .hero-subtitle {
         color: {hero_subtitle} !important;
         font-size: 0.9rem;
         font-weight: 400;
         margin-top: 4px;
-    }}
-    .hero-badge {{
+    }
+    .hero-badge {
         background: rgba(74, 222, 128, 0.2);
         color: #4ade80 !important;
         padding: 6px 14px;
@@ -144,50 +329,50 @@ def get_theme_styles(theme: str) -> str:
         font-size: 0.8rem;
         font-weight: 600;
         border: 1px solid rgba(74, 222, 128, 0.4);
-    }}
+    }
 
     /* Cards */
-    .metric-card {{
+    .metric-card {
         background: {card_bg} !important;
         border: 1px solid {card_border} !important;
         border-radius: 14px;
         padding: 1.2rem;
         margin-bottom: 0.8rem;
         box-shadow: {card_shadow};
-    }}
-    .metric-label {{
+    }
+    .metric-label {
         color: {text_muted} !important;
         font-size: 0.75rem;
         text-transform: uppercase;
         letter-spacing: 1px;
         font-weight: 600;
-    }}
-    .metric-value {{
+    }
+    .metric-value {
         color: {metric_val_color} !important;
         font-size: 1.6rem;
         font-weight: 700;
         margin-top: 4px;
-    }}
-    .metric-value.green {{ color: #10b981 !important; }}
-    .metric-value.amber {{ color: #f59e0b !important; }}
-    .metric-value.red {{ color: #ef4444 !important; }}
+    }
+    .metric-value.green { color: #10b981 !important; }
+    .metric-value.amber { color: #f59e0b !important; }
+    .metric-value.red { color: #ef4444 !important; }
 
     /* Progress Bar */
-    .budget-bar-bg {{
+    .budget-bar-bg {
         background: rgba(128,128,128,0.15) !important;
         border-radius: 8px;
         height: 12px;
         overflow: hidden;
         margin-top: 6px;
-    }}
-    .budget-bar-fill {{
+    }
+    .budget-bar-fill {
         height: 100%;
         border-radius: 8px;
         transition: width 0.6s ease;
-    }}
+    }
 
     /* Event Stream */
-    .event-stream {{
+    .event-stream {
         background: {event_bg} !important;
         border: 1px solid {event_border} !important;
         border-radius: 12px;
@@ -197,81 +382,83 @@ def get_theme_styles(theme: str) -> str:
         max-height: 480px;
         overflow-y: auto;
         color: {event_text} !important;
-    }}
-    .event-line {{
+    }
+    .event-line {
         padding: 3px 0;
         border-bottom: 1px solid rgba(128,128,128,0.1);
-    }}
-    .event-time {{ color: {event_time} !important; }}
-    .event-tool {{ color: #6366f1 !important; font-weight: 600; }}
-    .event-ok {{ color: #10b981 !important; }}
-    .event-warn {{ color: #f59e0b !important; }}
-    .event-alert {{ color: #ef4444 !important; }}
+    }
+    .event-time { color: {event_time} !important; }
+    .event-tool { color: #6366f1 !important; font-weight: 600; }
+    .event-ok { color: #10b981 !important; }
+    .event-warn { color: #f59e0b !important; }
+    .event-alert { color: #ef4444 !important; }
 
     /* Alert Card */
-    .alert-card {{
+    .alert-card {
         background: {alert_bg} !important;
         border-left: 4px solid #ef4444 !important;
         border: 1px solid {card_border};
         border-radius: 10px;
         padding: 1rem 1.2rem;
         margin-bottom: 0.8rem;
-    }}
-    .alert-card.silent {{
+    }
+    .alert-card.silent {
         border-left-color: #10b981 !important;
         background: {alert_silent_bg} !important;
-    }}
-    .alert-merchant {{
+    }
+    .alert-merchant {
         color: {text_color} !important;
         font-weight: 700;
         font-size: 1rem;
-    }}
-    .alert-detail {{
+    }
+    .alert-detail {
         color: {alert_detail} !important;
         font-size: 0.82rem;
         margin-top: 4px;
-    }}
+    }
 
     /* Dispute Box */
-    .dispute-box {{
+    .dispute-box {
         background: {dispute_bg} !important;
         border: 1px solid {dispute_border} !important;
         border-radius: 10px;
         padding: 1rem;
         margin-top: 0.5rem;
-    }}
-    .dispute-box pre {{
+    }
+    .dispute-box pre {
         color: {dispute_text} !important;
         white-space: pre-wrap;
         word-wrap: break-word;
         font-size: 0.78rem;
-    }}
+    }
+
+    {btn_rules}
 
     /* Streamlit Form Widgets */
-    div[data-baseweb="input"] > div {{
+    div[data-baseweb="input"] > div {
         background-color: {input_bg} !important;
         border-color: {input_border} !important;
         color: {input_text} !important;
-    }}
-    div[data-baseweb="select"] > div {{
+    }
+    div[data-baseweb="select"] > div {
         background-color: {input_bg} !important;
         border-color: {input_border} !important;
         color: {input_text} !important;
-    }}
-    div[data-testid="stExpander"] {{
+    }
+    div[data-testid="stExpander"] {
         background-color: {expander_bg} !important;
         border: 1px solid {card_border} !important;
         border-radius: 10px !important;
-    }}
-    div[data-testid="stSidebar"] {{
+    }
+    div[data-testid="stSidebar"] {
         background-color: {card_bg} !important;
         border-right: 1px solid {card_border} !important;
-    }}
+    }
 
     /* Hide Streamlit Branding */
-    #MainMenu {{visibility: hidden;}}
-    footer {{visibility: hidden;}}
-    [data-testid="stToolbar"] {{visibility: hidden;}}
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    [data-testid="stToolbar"] {visibility: hidden;}
 </style>
 """
 
