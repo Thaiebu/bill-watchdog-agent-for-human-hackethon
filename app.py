@@ -82,6 +82,11 @@ def get_theme_styles(theme: str) -> str:
         btn_sec_bg = "#1e293b"
         btn_sec_border = "#334155"
         btn_sec_text = "#f8fafc"
+        json_bg = "#0d1117"
+        json_border = "#30363d"
+        json_text = "#f8fafc"
+        json_key = "#79c0ff"
+        json_val = "#a5d6ff"
     else:
         bg_app = "#f8fafc"
         text_color = "#0f172a"
@@ -118,6 +123,11 @@ def get_theme_styles(theme: str) -> str:
         btn_sec_bg = "#ffffff"
         btn_sec_border = "#cbd5e1"
         btn_sec_text = "#0f172a"
+        json_bg = "#f1f5f9"
+        json_border = "#cbd5e1"
+        json_text = "#0f172a"
+        json_key = "#0369a1"
+        json_val = "#0f172a"
 
     template = """
 <style>
@@ -371,6 +381,48 @@ def get_theme_styles(theme: str) -> str:
         color: __BTN_SEC_TEXT__ !important;
     }
 
+    /* JSON Viewer & Code Blocks */
+    [data-testid="stJson"],
+    .stJson,
+    div[data-testid="stJson"] > div,
+    [data-testid="stJson"] .react-json-view {
+        background-color: __JSON_BG__ !important;
+        border: 1px solid __JSON_BORDER__ !important;
+        border-radius: 10px !important;
+        padding: 10px 14px !important;
+        color: __JSON_TEXT__ !important;
+    }
+    [data-testid="stJson"] pre,
+    [data-testid="stJson"] code,
+    code, pre {
+        background: transparent !important;
+        color: __JSON_TEXT__ !important;
+    }
+    [data-testid="stJson"] span[style*="color"],
+    [data-testid="stJson"] .object-key,
+    [data-testid="stJson"] .object-key span {
+        color: __JSON_KEY__ !important;
+        font-weight: 600 !important;
+    }
+    [data-testid="stJson"] .string-value,
+    [data-testid="stJson"] span.variable-value > * {
+        color: __JSON_VAL__ !important;
+    }
+    [data-testid="stJson"] .node-ellipsis,
+    [data-testid="stJson"] .brace-row,
+    [data-testid="stJson"] span {
+        color: __JSON_TEXT__ !important;
+    }
+    div[data-testid="stCodeBlock"] {
+        background-color: __JSON_BG__ !important;
+        border: 1px solid __JSON_BORDER__ !important;
+        border-radius: 10px !important;
+    }
+    [data-testid="stDataFrame"] {
+        border: 1px solid __CARD_BORDER__ !important;
+        border-radius: 8px !important;
+    }
+
     /* Streamlit Form Inputs */
     div[data-baseweb="input"] > div {
         background-color: __INPUT_BG__ !important;
@@ -437,6 +489,11 @@ def get_theme_styles(theme: str) -> str:
         "__INPUT_TEXT__": input_text,
         "__EXPANDER_BG__": expander_bg,
         "__METRIC_VAL_COLOR__": metric_val_color,
+        "__JSON_BG__": json_bg,
+        "__JSON_BORDER__": json_border,
+        "__JSON_TEXT__": json_text,
+        "__JSON_KEY__": json_key,
+        "__JSON_VAL__": json_val,
     }
     for k, v in replacements.items():
         template = template.replace(k, v)
@@ -1457,6 +1514,28 @@ with tab_email:
                         st.warning(f"⚠️ Parse error: {has_error}")
                     elif invoice:
                         st.markdown("**Extracted Invoice / Statement:**")
+                        card_bg_inline = "#161b22" if st.session_state.theme == "dark" else "#f8fafc"
+                        card_border_inline = "#30363d" if st.session_state.theme == "dark" else "#e2e8f0"
+                        title_color_inline = "#f8fafc" if st.session_state.theme == "dark" else "#0f172a"
+                        meta_color_inline = "#94a3b8" if st.session_state.theme == "dark" else "#64748b"
+
+                        st.markdown(f"""
+                        <div style="background:{card_bg_inline}; border:1px solid {card_border_inline}; border-radius:10px; padding:12px 16px; margin-bottom:10px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                                <span style="font-weight:700; font-size:1rem; color:{title_color_inline};">
+                                    📄 {invoice.get('merchant_name', 'Unknown')}
+                                </span>
+                                <span style="font-weight:700; font-size:1.05rem; color:#10b981;">
+                                    {invoice.get('currency', '₹')} {invoice.get('total_amount', 0):,.2f}
+                                </span>
+                            </div>
+                            <div style="font-size:0.82rem; color:{meta_color_inline};">
+                                <span>📅 Date: <strong style="color:{title_color_inline};">{invoice.get('invoice_date', 'N/A')}</strong></span>
+                                <span style="margin-left:14px;">📑 Line Items: <strong style="color:{title_color_inline};">{len(invoice.get('line_items', []))}</strong></span>
+                            </div>
+                        </div>
+                        """, unsafe_allow_html=True)
+
                         st.json({
                             "merchant_name": invoice.get("merchant_name"),
                             "total_amount":  invoice.get("total_amount"),
