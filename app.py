@@ -17,7 +17,7 @@ if ROOT not in sys.path:
 
 import streamlit as st
 
-from storage.db import init_db, get_budget_limits, get_all_bills_this_month, get_pending_reminders
+from storage.db import init_db, get_budget_limits, get_all_bills_this_month, get_pending_reminders, insert_bill
 from storage.seed_data import seed_all, DEMO_BILLS
 from tools.extractor_tool import extract_invoice_entities
 from tools.baseline_tool import query_billing_baseline
