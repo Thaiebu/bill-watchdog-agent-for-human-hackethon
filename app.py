@@ -483,7 +483,8 @@ with right_col:
 
                             # Step 2: Baseline
                             baseline = query_billing_baseline(user_id=user_id, merchant_name=up_invoice["merchant_name"])
-                            log_event("📊", "query_billing_baseline", f"Baseline ₹{baseline.get('average_monthly_spend', 0):,.0f}")
+                            base_str = f"₹{baseline['average_monthly_spend']:,.0f}" if baseline.get("average_monthly_spend") is not None else "New Biller (Baseline being established)"
+                            log_event("📊", "query_billing_baseline", f"Baseline: {base_str}")
 
                             # Step 3: Anomaly
                             anomaly = detect_bill_anomalies(current_invoice=up_invoice, baseline_data=baseline)
@@ -625,7 +626,7 @@ with right_col:
                     "merchant": invoice["merchant_name"],
                     "severity": "ACTION_REQUIRED",
                     "detail": (
-                        f"₹{baseline.get('average_monthly_spend', 0):,.0f} → ₹{invoice['total_amount']:,.0f} "
+                        f"₹{(baseline.get('average_monthly_spend') or 0):,.0f} → ₹{invoice['total_amount']:,.0f} "
                         f"(+{anomaly['delta_percentage']:.0f}%) — {anomaly['anomaly_type'].replace('_', ' ')}"
                     ),
                 })
@@ -696,7 +697,7 @@ with right_col:
                 st.session_state.alerts.append({
                     "merchant": invoice["merchant_name"],
                     "severity": "ACTION_REQUIRED",
-                    "detail": f"₹{baseline.get('average_monthly_spend', 0):,.0f} → ₹{invoice['total_amount']:,.0f} (+{anomaly['delta_percentage']:.0f}%)",
+                    "detail": f"₹{(baseline.get('average_monthly_spend') or 0):,.0f} → ₹{invoice['total_amount']:,.0f} (+{anomaly['delta_percentage']:.0f}%)",
                 })
             else:
                 log_event("🟢", "DECISION", f"SILENT — {invoice['merchant_name']} archived.", "ok")
