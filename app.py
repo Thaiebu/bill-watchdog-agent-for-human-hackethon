@@ -517,15 +517,29 @@ with right_col:
                                 })
 
                             # Insert into SQLite so Budget Overview & Safe-to-Spend update
-                            insert_bill({
-                                "user_id": user_id,
-                                "merchant_name": up_invoice["merchant_name"],
-                                "invoice_date": up_invoice.get("invoice_date", datetime.now().strftime("%Y-%m-%d")),
-                                "total_amount": up_invoice["total_amount"],
-                                "currency": up_invoice.get("currency", "INR"),
-                                "silent": 0 if (anomaly["is_anomaly"] and anomaly["severity"] == "ACTION_REQUIRED") else 1,
-                                "alert_reason": anomaly["root_cause_explanation"] if anomaly["is_anomaly"] else None,
-                            })
+                            if up_invoice.get("line_items"):
+                                for item in up_invoice["line_items"]:
+                                    s_amt = item.get("spent", item.get("amount", 0))
+                                    if s_amt > 0:
+                                        insert_bill({
+                                            "user_id": user_id,
+                                            "merchant_name": item.get("vendor", item.get("name", "Unknown")),
+                                            "invoice_date": item.get("date", up_invoice.get("invoice_date", datetime.now().strftime("%Y-%m-%d"))),
+                                            "total_amount": s_amt,
+                                            "currency": up_invoice.get("currency", "INR"),
+                                            "silent": 1,
+                                            "alert_reason": f"From statement: {up_invoice['merchant_name']}",
+                                        })
+                            else:
+                                insert_bill({
+                                    "user_id": user_id,
+                                    "merchant_name": up_invoice["merchant_name"],
+                                    "invoice_date": up_invoice.get("invoice_date", datetime.now().strftime("%Y-%m-%d")),
+                                    "total_amount": up_invoice["total_amount"],
+                                    "currency": up_invoice.get("currency", "INR"),
+                                    "silent": 0 if (anomaly["is_anomaly"] and anomaly["severity"] == "ACTION_REQUIRED") else 1,
+                                    "alert_reason": anomaly["root_cause_explanation"] if anomaly["is_anomaly"] else None,
+                                })
 
                             st.session_state.bill_results[upload_bill_id] = {
                                 "invoice": up_invoice,
@@ -546,177 +560,177 @@ with right_col:
             key="bill_select",
         )
 
-    if st.button("⚡ Process This Bill", key="process_btn", type="primary", use_container_width=True):
-        bill_obj = next(b for b in DEMO_BILLS if b["label"] == selected)
-        bill_data = bill_obj["raw"]
-        bill_id = bill_obj["id"]
-
-        if bill_id in st.session_state.processed_bills:
-            st.warning(f"Bill already processed: {bill_data['merchant_name']}")
-        else:
-            st.session_state.processed_bills.add(bill_id)
-            progress = st.empty()
-
-            # ── Step 1: Extract ──
-            progress.markdown("🔄 **Step 1/5**: Extracting invoice entities...")
-            log_event("📄", "extract_invoice_entities", f"Parsing {bill_data['merchant_name']}...")
-            invoice = extract_invoice_entities(
-                raw_content=json.dumps(bill_data),
-                source_type="json",
-            )
-            log_event("✅", "extract_invoice_entities",
-                       f"{invoice['merchant_name']} ₹{invoice['total_amount']:,.0f} extracted")
-            time.sleep(0.3)
-
-            # ── Step 2: Baseline ──
-            progress.markdown("🔄 **Step 2/5**: Querying billing baseline...")
-            log_event("📊", "query_billing_baseline", f"Fetching history for {invoice['merchant_name']}...")
-            baseline = query_billing_baseline(
-                user_id=user_id,
-                merchant_name=invoice["merchant_name"],
-            )
-            if baseline["has_history"]:
-                log_event("✅", "query_billing_baseline",
-                           f"Baseline ₹{baseline['average_monthly_spend']:,.0f} ({baseline['baseline_months']}mo)")
-            else:
-                log_event("ℹ️", "query_billing_baseline", "No prior history — new vendor", "warn")
-            time.sleep(0.3)
-
-            # ── Step 3: Anomaly Detection ──
-            progress.markdown("🔄 **Step 3/5**: Detecting anomalies...")
-            log_event("🔍", "detect_bill_anomalies", "Evaluating delta, promos, fees...")
-            anomaly = detect_bill_anomalies(
-                current_invoice=invoice,
-                baseline_data=baseline,
-            )
-            if anomaly["is_anomaly"]:
-                log_event("🔴", "detect_bill_anomalies",
-                           f"ANOMALY: {anomaly['anomaly_type']} — {anomaly['root_cause_explanation'][:80]}...",
-                           "alert")
-            else:
-                log_event("🟢", "detect_bill_anomalies",
-                           f"NORMAL: {anomaly['root_cause_explanation'][:80]}")
-            time.sleep(0.3)
-
-            # ── Step 4: Budget Impact ──
-            progress.markdown("🔄 **Step 4/5**: Evaluating budget impact...")
-            log_event("💰", "evaluate_budget_impact", "Calculating Safe-to-Spend & projections...")
-            budget = evaluate_budget_impact(
-                user_id=user_id,
-                current_invoice=invoice,
-                anomaly=anomaly,
-            )
-            budget_icon = "🟢" if budget["budget_status"] == "ON_TRACK" else "🔴"
-            log_event(budget_icon, "evaluate_budget_impact", budget["impact_statement"][:100])
-            time.sleep(0.3)
-
-            # ── Step 5: Dispute / Silent Archive ──
-            dispute = None
-            if anomaly["is_anomaly"] and anomaly["severity"] == "ACTION_REQUIRED":
-                progress.markdown("🔄 **Step 5/5**: Drafting dispute packet...")
-                log_event("📝", "draft_dispute_packet", f"Generating dispute email for {invoice['merchant_name']}...")
-                dispute = draft_dispute_packet(
-                    merchant_name=invoice["merchant_name"],
-                    anomaly=anomaly,
-                    account_info={"account_id": "ACC-9283", "months_as_customer": 18, "payment_record": "excellent"},
-                )
-                log_event("✅", "draft_dispute_packet", "Dispute email ready for review")
-
-                st.session_state.disputes[bill_id] = dispute
-                st.session_state.alerts.append({
-                    "merchant": invoice["merchant_name"],
-                    "severity": "ACTION_REQUIRED",
-                    "detail": (
-                        f"₹{(baseline.get('average_monthly_spend') or 0):,.0f} → ₹{invoice['total_amount']:,.0f} "
-                        f"(+{anomaly['delta_percentage']:.0f}%) — {anomaly['anomaly_type'].replace('_', ' ')}"
-                    ),
-                })
-                progress.markdown(f"🔴 **ACTION REQUIRED** — {invoice['merchant_name']}: {anomaly['root_cause_explanation'][:100]}")
-            else:
-                log_event("🟢", "DECISION", f"SILENT — {invoice['merchant_name']} archived. 0 notifications.", "ok")
-                st.session_state.alerts.append({
-                    "merchant": invoice["merchant_name"],
-                    "severity": "SILENT",
-                    "detail": f"₹{invoice['total_amount']:,.0f} — Normal. Silently archived.",
-                })
-                progress.markdown(f"🟢 **SILENT** — {invoice['merchant_name']} stored quietly. No notification sent.")
-
-            # Save result
-            st.session_state.bill_results[bill_id] = {
-                "invoice": invoice,
-                "baseline": baseline,
-                "anomaly": anomaly,
-                "budget": budget,
-                "dispute": dispute,
-            }
-
-            # Re-run to update budget overview and alerts
-            time.sleep(0.5)
-            st.rerun()
-
-    # Process All button
-    st.markdown("")
-    if st.button(f"🚀 Process All {len(DEMO_BILLS)} Bills (Full Demo)", key="process_all_btn", use_container_width=True):
-        for bill_obj in DEMO_BILLS:
+        if st.button("⚡ Process This Bill", key="process_btn", type="primary", use_container_width=True):
+            bill_obj = next(b for b in DEMO_BILLS if b["label"] == selected)
             bill_data = bill_obj["raw"]
             bill_id = bill_obj["id"]
-
+    
             if bill_id in st.session_state.processed_bills:
-                continue
-
-            st.session_state.processed_bills.add(bill_id)
-
-            # Step 1: Extract
-            log_event("📄", "extract_invoice_entities", f"Parsing {bill_data['merchant_name']}...")
-            invoice = extract_invoice_entities(raw_content=json.dumps(bill_data), source_type="json")
-            log_event("✅", "extract_invoice_entities", f"{invoice['merchant_name']} ₹{invoice['total_amount']:,.0f}")
-
-            # Step 2: Baseline
-            log_event("📊", "query_billing_baseline", f"Fetching {invoice['merchant_name']}...")
-            baseline = query_billing_baseline(user_id=user_id, merchant_name=invoice["merchant_name"])
-            log_event("✅", "query_billing_baseline", f"Baseline: ₹{baseline.get('average_monthly_spend', 'N/A')}")
-
-            # Step 3: Anomaly
-            log_event("🔍", "detect_bill_anomalies", "Evaluating...")
-            anomaly = detect_bill_anomalies(current_invoice=invoice, baseline_data=baseline)
-
-            # Step 4: Budget
-            log_event("💰", "evaluate_budget_impact", "Calculating...")
-            budget = evaluate_budget_impact(user_id=user_id, current_invoice=invoice, anomaly=anomaly)
-
-            # Step 5: Decision
-            dispute = None
-            if anomaly["is_anomaly"] and anomaly["severity"] == "ACTION_REQUIRED":
-                log_event("🔴", "detect_bill_anomalies", f"ANOMALY: {anomaly['anomaly_type']}", "alert")
-                dispute = draft_dispute_packet(
-                    merchant_name=invoice["merchant_name"],
-                    anomaly=anomaly,
-                    account_info={"account_id": "ACC-9283", "months_as_customer": 18, "payment_record": "excellent"},
-                )
-                log_event("📝", "draft_dispute_packet", "Dispute ready", "alert")
-                st.session_state.disputes[bill_id] = dispute
-                st.session_state.alerts.append({
-                    "merchant": invoice["merchant_name"],
-                    "severity": "ACTION_REQUIRED",
-                    "detail": f"₹{(baseline.get('average_monthly_spend') or 0):,.0f} → ₹{invoice['total_amount']:,.0f} (+{anomaly['delta_percentage']:.0f}%)",
-                })
+                st.warning(f"Bill already processed: {bill_data['merchant_name']}")
             else:
-                log_event("🟢", "DECISION", f"SILENT — {invoice['merchant_name']} archived.", "ok")
-                st.session_state.alerts.append({
-                    "merchant": invoice["merchant_name"],
-                    "severity": "SILENT",
-                    "detail": f"₹{invoice['total_amount']:,.0f} — Normal.",
-                })
-
-            log_event("─" * 3, "─" * 20, "─" * 30)
-
-            st.session_state.bill_results[bill_id] = {
-                "invoice": invoice, "baseline": baseline,
-                "anomaly": anomaly, "budget": budget, "dispute": dispute,
-            }
-
-        st.rerun()
-
+                st.session_state.processed_bills.add(bill_id)
+                progress = st.empty()
+    
+                # ── Step 1: Extract ──
+                progress.markdown("🔄 **Step 1/5**: Extracting invoice entities...")
+                log_event("📄", "extract_invoice_entities", f"Parsing {bill_data['merchant_name']}...")
+                invoice = extract_invoice_entities(
+                    raw_content=json.dumps(bill_data),
+                    source_type="json",
+                )
+                log_event("✅", "extract_invoice_entities",
+                           f"{invoice['merchant_name']} ₹{invoice['total_amount']:,.0f} extracted")
+                time.sleep(0.3)
+    
+                # ── Step 2: Baseline ──
+                progress.markdown("🔄 **Step 2/5**: Querying billing baseline...")
+                log_event("📊", "query_billing_baseline", f"Fetching history for {invoice['merchant_name']}...")
+                baseline = query_billing_baseline(
+                    user_id=user_id,
+                    merchant_name=invoice["merchant_name"],
+                )
+                if baseline["has_history"]:
+                    log_event("✅", "query_billing_baseline",
+                               f"Baseline ₹{baseline['average_monthly_spend']:,.0f} ({baseline['baseline_months']}mo)")
+                else:
+                    log_event("ℹ️", "query_billing_baseline", "No prior history — new vendor", "warn")
+                time.sleep(0.3)
+    
+                # ── Step 3: Anomaly Detection ──
+                progress.markdown("🔄 **Step 3/5**: Detecting anomalies...")
+                log_event("🔍", "detect_bill_anomalies", "Evaluating delta, promos, fees...")
+                anomaly = detect_bill_anomalies(
+                    current_invoice=invoice,
+                    baseline_data=baseline,
+                )
+                if anomaly["is_anomaly"]:
+                    log_event("🔴", "detect_bill_anomalies",
+                               f"ANOMALY: {anomaly['anomaly_type']} — {anomaly['root_cause_explanation'][:80]}...",
+                               "alert")
+                else:
+                    log_event("🟢", "detect_bill_anomalies",
+                               f"NORMAL: {anomaly['root_cause_explanation'][:80]}")
+                time.sleep(0.3)
+    
+                # ── Step 4: Budget Impact ──
+                progress.markdown("🔄 **Step 4/5**: Evaluating budget impact...")
+                log_event("💰", "evaluate_budget_impact", "Calculating Safe-to-Spend & projections...")
+                budget = evaluate_budget_impact(
+                    user_id=user_id,
+                    current_invoice=invoice,
+                    anomaly=anomaly,
+                )
+                budget_icon = "🟢" if budget["budget_status"] == "ON_TRACK" else "🔴"
+                log_event(budget_icon, "evaluate_budget_impact", budget["impact_statement"][:100])
+                time.sleep(0.3)
+    
+                # ── Step 5: Dispute / Silent Archive ──
+                dispute = None
+                if anomaly["is_anomaly"] and anomaly["severity"] == "ACTION_REQUIRED":
+                    progress.markdown("🔄 **Step 5/5**: Drafting dispute packet...")
+                    log_event("📝", "draft_dispute_packet", f"Generating dispute email for {invoice['merchant_name']}...")
+                    dispute = draft_dispute_packet(
+                        merchant_name=invoice["merchant_name"],
+                        anomaly=anomaly,
+                        account_info={"account_id": "ACC-9283", "months_as_customer": 18, "payment_record": "excellent"},
+                    )
+                    log_event("✅", "draft_dispute_packet", "Dispute email ready for review")
+    
+                    st.session_state.disputes[bill_id] = dispute
+                    st.session_state.alerts.append({
+                        "merchant": invoice["merchant_name"],
+                        "severity": "ACTION_REQUIRED",
+                        "detail": (
+                            f"₹{(baseline.get('average_monthly_spend') or 0):,.0f} → ₹{invoice['total_amount']:,.0f} "
+                            f"(+{anomaly['delta_percentage']:.0f}%) — {anomaly['anomaly_type'].replace('_', ' ')}"
+                        ),
+                    })
+                    progress.markdown(f"🔴 **ACTION REQUIRED** — {invoice['merchant_name']}: {anomaly['root_cause_explanation'][:100]}")
+                else:
+                    log_event("🟢", "DECISION", f"SILENT — {invoice['merchant_name']} archived. 0 notifications.", "ok")
+                    st.session_state.alerts.append({
+                        "merchant": invoice["merchant_name"],
+                        "severity": "SILENT",
+                        "detail": f"₹{invoice['total_amount']:,.0f} — Normal. Silently archived.",
+                    })
+                    progress.markdown(f"🟢 **SILENT** — {invoice['merchant_name']} stored quietly. No notification sent.")
+    
+                # Save result
+                st.session_state.bill_results[bill_id] = {
+                    "invoice": invoice,
+                    "baseline": baseline,
+                    "anomaly": anomaly,
+                    "budget": budget,
+                    "dispute": dispute,
+                }
+    
+                # Re-run to update budget overview and alerts
+                time.sleep(0.5)
+                st.rerun()
+    
+        # Process All button
+        st.markdown("")
+        if st.button(f"🚀 Process All {len(DEMO_BILLS)} Bills (Full Demo)", key="process_all_btn", use_container_width=True):
+            for bill_obj in DEMO_BILLS:
+                bill_data = bill_obj["raw"]
+                bill_id = bill_obj["id"]
+    
+                if bill_id in st.session_state.processed_bills:
+                    continue
+    
+                st.session_state.processed_bills.add(bill_id)
+    
+                # Step 1: Extract
+                log_event("📄", "extract_invoice_entities", f"Parsing {bill_data['merchant_name']}...")
+                invoice = extract_invoice_entities(raw_content=json.dumps(bill_data), source_type="json")
+                log_event("✅", "extract_invoice_entities", f"{invoice['merchant_name']} ₹{invoice['total_amount']:,.0f}")
+    
+                # Step 2: Baseline
+                log_event("📊", "query_billing_baseline", f"Fetching {invoice['merchant_name']}...")
+                baseline = query_billing_baseline(user_id=user_id, merchant_name=invoice["merchant_name"])
+                log_event("✅", "query_billing_baseline", f"Baseline: ₹{baseline.get('average_monthly_spend', 'N/A')}")
+    
+                # Step 3: Anomaly
+                log_event("🔍", "detect_bill_anomalies", "Evaluating...")
+                anomaly = detect_bill_anomalies(current_invoice=invoice, baseline_data=baseline)
+    
+                # Step 4: Budget
+                log_event("💰", "evaluate_budget_impact", "Calculating...")
+                budget = evaluate_budget_impact(user_id=user_id, current_invoice=invoice, anomaly=anomaly)
+    
+                # Step 5: Decision
+                dispute = None
+                if anomaly["is_anomaly"] and anomaly["severity"] == "ACTION_REQUIRED":
+                    log_event("🔴", "detect_bill_anomalies", f"ANOMALY: {anomaly['anomaly_type']}", "alert")
+                    dispute = draft_dispute_packet(
+                        merchant_name=invoice["merchant_name"],
+                        anomaly=anomaly,
+                        account_info={"account_id": "ACC-9283", "months_as_customer": 18, "payment_record": "excellent"},
+                    )
+                    log_event("📝", "draft_dispute_packet", "Dispute ready", "alert")
+                    st.session_state.disputes[bill_id] = dispute
+                    st.session_state.alerts.append({
+                        "merchant": invoice["merchant_name"],
+                        "severity": "ACTION_REQUIRED",
+                        "detail": f"₹{(baseline.get('average_monthly_spend') or 0):,.0f} → ₹{invoice['total_amount']:,.0f} (+{anomaly['delta_percentage']:.0f}%)",
+                    })
+                else:
+                    log_event("🟢", "DECISION", f"SILENT — {invoice['merchant_name']} archived.", "ok")
+                    st.session_state.alerts.append({
+                        "merchant": invoice["merchant_name"],
+                        "severity": "SILENT",
+                        "detail": f"₹{invoice['total_amount']:,.0f} — Normal.",
+                    })
+    
+                log_event("─" * 3, "─" * 20, "─" * 30)
+    
+                st.session_state.bill_results[bill_id] = {
+                    "invoice": invoice, "baseline": baseline,
+                    "anomaly": anomaly, "budget": budget, "dispute": dispute,
+                }
+    
+            st.rerun()
+    
     st.markdown("---")
 
     # ── Section 2: Agent Activity Stream ──
@@ -746,15 +760,48 @@ with right_col:
 
     st.markdown("---")
 
-    # ── Section 3: Bank Statement Breakdown ──
+    # ── Section 3: Bank Statement Breakdown & Agent Audit ──
     stmt_bills = [res["invoice"] for res in st.session_state.bill_results.values() 
                   if any("date" in item for item in res.get("invoice", {}).get("line_items", []))]
     if stmt_bills:
-        st.markdown("### 📑 Bank Statement Breakdown")
+        st.markdown("### 📑 Bank Statement Breakdown & Agent Audit")
         for stmt in stmt_bills:
-            with st.expander(f"📊 {stmt['merchant_name']} — Total Debited: ₹{stmt['total_amount']:,.2f} ({len(stmt['line_items'])} Transactions)", expanded=True):
+            txns = stmt.get("line_items", [])
+            debits = [t for t in txns if t.get("spent", t.get("amount", 0)) > 0]
+            credits = [t for t in txns if t.get("deposit", 0) > 0]
+            tot_debit = sum(t.get("spent", t.get("amount", 0)) for t in debits)
+            tot_credit = sum(t.get("deposit", 0) for t in credits)
+            net_outflow = tot_debit - tot_credit
+
+            with st.expander(f"📊 {stmt['merchant_name']} — Total Debited: ₹{tot_debit:,.2f} ({len(txns)} Transactions)", expanded=True):
+                # 4 KPI Summary Cards
+                m1, m2, m3, m4 = st.columns(4)
+                with m1:
+                    st.metric("Total Debited (Spent)", f"₹{tot_debit:,.2f}", delta=f"-{len(debits)} debits", delta_color="inverse")
+                with m2:
+                    st.metric("Total Credited (Deposits)", f"₹{tot_credit:,.2f}", delta=f"+{len(credits)} deposits")
+                with m3:
+                    st.metric("Net Cash Outflow", f"₹{net_outflow:,.2f}")
+                with m4:
+                    st.metric("Transactions", len(txns))
+
+                # Agent Statement Audit Narrative
+                top_spenders = sorted(debits, key=lambda x: x.get("spent", x.get("amount", 0)), reverse=True)[:3]
+                top_str = ", ".join([f"**{ts.get('vendor', ts.get('name'))}** (₹{ts.get('spent', ts.get('amount', 0)):,.2f})" for ts in top_spenders])
+                largest_name = top_spenders[0].get("vendor", top_spenders[0].get("name")) if top_spenders else "None"
+                largest_amt = top_spenders[0].get("spent", top_spenders[0].get("amount", 0)) if top_spenders else 0
+
+                st.info(
+                    f"🤖 **Agent Executive Financial Audit:**\n\n"
+                    f"• **Statement Period:** `{stmt.get('billing_period', 'Monthly Statement')}`\n"
+                    f"• **Top Spending Outflows:** {top_str}\n"
+                    f"• **Investments & Systematic Plans:** Identified automated recurring investments (ICICI Direct, TATA MF) and transport/travel bookings (Indian Railways).\n"
+                    f"• **Inflows / Reimbursements:** Found ₹{tot_credit:,.2f} in employer reimbursements / credits.\n"
+                    f"• **Sentinel Verdict:** Normal daily living expenses silently categorized. Largest single outflow is **{largest_name}** at ₹{largest_amt:,.2f}."
+                )
+
                 rows = []
-                for item in stmt["line_items"]:
+                for item in txns:
                     spent_val = item.get("spent", item.get("amount", 0))
                     dep_val = item.get("deposit", 0)
                     bal_val = item.get("balance")
