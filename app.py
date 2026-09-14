@@ -428,13 +428,118 @@ with left_col:
 
 with right_col:
     # ── Bill Processing Controls ──
-    st.markdown("### 🧾 Process Bills")
+    st.markdown("### 🧾 Process Bills & Statements")
+    tab_demo, tab_upload = st.tabs(["⚡ Demo Bills (10)", "📤 Upload Bank PDF"])
 
-    selected = st.selectbox(
-        "Select a bill to process:",
-        [b["label"] for b in DEMO_BILLS],
-        key="bill_select",
-    )
+    with tab_upload:
+        st.markdown("##### 📤 Upload Monthly Bank Statement PDF")
+        st.caption("Upload a statement PDF (HDFC, ICICI, SBI, IndusInd, etc.). If password-protected, BillWatchdog decrypts it in-memory with zero-storage privacy.")
+
+        uploaded_pdf = st.file_uploader(
+            "Choose Statement PDF",
+            type=["pdf"],
+            key="statement_pdf_uploader",
+            help="Your file is processed 100% locally in volatile RAM"
+        )
+
+        if uploaded_pdf is not None:
+            pdf_bytes = uploaded_pdf.read()
+            from tools.pdf_statement_tool import inspect_pdf_bytes, decrypt_and_extract_statement
+            pdf_info = inspect_pdf_bytes(pdf_bytes)
+
+            is_enc = pdf_info.get("is_encrypted", False)
+            if is_enc:
+                st.warning("🔒 **Password-Protected Statement Detected**")
+                st.caption("Common bank formats: PAN (uppercase) or First 4 letters of name + DOB (DDMM)")
+                upload_pwd = st.text_input(
+                    "Statement Password",
+                    type="password",
+                    placeholder="e.g. IN1995 or ABCD1234E",
+                    key="upload_pdf_pwd_input",
+                    help="Never saved to database, logs, or disk."
+                )
+            else:
+                st.info("📄 PDF is unencrypted. Ready to analyze.")
+                upload_pwd = ""
+
+            if st.button("🚀 Decrypt & Analyze Statement", type="primary", use_container_width=True, key="analyze_uploaded_pdf_btn"):
+                if is_enc and not upload_pwd:
+                    st.error("Please enter the statement password to decrypt.")
+                else:
+                    with st.spinner("Decrypting in-memory & running through 6-tool pipeline..."):
+                        dec_result = decrypt_and_extract_statement(pdf_bytes, password=upload_pwd)
+                        if not dec_result.get("success"):
+                            st.error(f"❌ {dec_result.get('error', 'Failed to extract statement')}")
+                        else:
+                            up_invoice = dec_result["invoice"]
+                            st.success(f"✅ Extracted: **{up_invoice['merchant_name']}** — **₹{up_invoice['total_amount']:,.2f}**")
+
+                            upload_bill_id = f"upload_{int(time.time())}"
+                            st.session_state.processed_bills.add(upload_bill_id)
+
+                            log_event("📄", "extract_invoice_entities", f"Uploaded PDF: {up_invoice['merchant_name']} ₹{up_invoice['total_amount']:,.0f}")
+
+                            # Step 2: Baseline
+                            baseline = query_billing_baseline(user_id=user_id, merchant_name=up_invoice["merchant_name"])
+                            log_event("📊", "query_billing_baseline", f"Baseline ₹{baseline.get('average_monthly_spend', 0):,.0f}")
+
+                            # Step 3: Anomaly
+                            anomaly = detect_bill_anomalies(current_invoice=up_invoice, baseline_data=baseline)
+                            log_event("🔍", "detect_bill_anomalies", f"{anomaly['anomaly_type']} (Δ ₹{anomaly['delta_amount']:+,.0f})")
+
+                            # Step 4: Budget
+                            budget = evaluate_budget_impact(user_id=user_id, current_invoice=up_invoice, anomaly=anomaly)
+                            log_event("💰", "evaluate_budget_impact", budget["budget_status"])
+
+                            # Step 5: Dispute / Alert
+                            dispute = None
+                            if anomaly["is_anomaly"] and anomaly["severity"] == "ACTION_REQUIRED":
+                                dispute = draft_dispute_packet(
+                                    merchant_name=up_invoice["merchant_name"],
+                                    anomaly=anomaly,
+                                    account_info={"account_id": "UPLOAD-BANK", "months_as_customer": 12, "payment_record": "good"},
+                                )
+                                st.session_state.disputes[upload_bill_id] = dispute
+                                st.session_state.alerts.append({
+                                    "merchant": up_invoice["merchant_name"],
+                                    "severity": "ACTION_REQUIRED",
+                                    "detail": f"₹{up_invoice['total_amount']:,.0f} — {anomaly['root_cause_explanation']}",
+                                })
+                            else:
+                                st.session_state.alerts.append({
+                                    "merchant": up_invoice["merchant_name"],
+                                    "severity": "SILENT",
+                                    "detail": f"₹{up_invoice['total_amount']:,.0f} — Normal monthly statement. Silently archived.",
+                                })
+
+                            # Insert into SQLite so Budget Overview & Safe-to-Spend update
+                            insert_bill({
+                                "user_id": user_id,
+                                "merchant_name": up_invoice["merchant_name"],
+                                "invoice_date": up_invoice.get("invoice_date", datetime.now().strftime("%Y-%m-%d")),
+                                "total_amount": up_invoice["total_amount"],
+                                "currency": up_invoice.get("currency", "INR"),
+                                "silent": 0 if (anomaly["is_anomaly"] and anomaly["severity"] == "ACTION_REQUIRED") else 1,
+                                "alert_reason": anomaly["root_cause_explanation"] if anomaly["is_anomaly"] else None,
+                            })
+
+                            st.session_state.bill_results[upload_bill_id] = {
+                                "invoice": up_invoice,
+                                "baseline": baseline,
+                                "anomaly": anomaly,
+                                "budget": budget,
+                                "dispute": dispute,
+                            }
+
+                            time.sleep(0.5)
+                            st.rerun()
+
+    with tab_demo:
+        selected = st.selectbox(
+            "Select a demo bill to process:",
+            [b["label"] for b in DEMO_BILLS],
+            key="bill_select",
+        )
 
     if st.button("⚡ Process This Bill", key="process_btn", type="primary", use_container_width=True):
         bill_obj = next(b for b in DEMO_BILLS if b["label"] == selected)
