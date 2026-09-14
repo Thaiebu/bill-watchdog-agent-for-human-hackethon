@@ -40,151 +40,242 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-st.markdown("""
+if "theme" not in st.session_state:
+    st.session_state.theme = "dark"
+
+
+def get_theme_styles(theme: str) -> str:
+    is_dark = (theme == "dark")
+    if is_dark:
+        bg_app = "#090d16"
+        text_color = "#f8fafc"
+        text_muted = "#94a3b8"
+        hero_bg = "linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%)"
+        hero_subtitle = "#b8b5ff"
+        card_bg = "linear-gradient(135deg, #131b2e 0%, #16213e 100%)"
+        card_border = "rgba(255, 255, 255, 0.08)"
+        card_shadow = "0 4px 20px rgba(0,0,0,0.3)"
+        event_bg = "#0a0e17"
+        event_border = "#21262d"
+        event_text = "#c9d1d9"
+        event_time = "#484f58"
+        alert_bg = "linear-gradient(135deg, #1c1a2e, #2a1f3d)"
+        alert_silent_bg = "linear-gradient(135deg, #1a2e1c, #1f3d2a)"
+        alert_detail = "#b8b5ff"
+        dispute_bg = "#161b22"
+        dispute_border = "#30363d"
+        dispute_text = "#c9d1d9"
+        input_bg = "#0f172a"
+        input_border = "#334155"
+        input_text = "#f8fafc"
+        expander_bg = "#0f172a"
+        metric_val_color = "#ffffff"
+    else:
+        bg_app = "#f8fafc"
+        text_color = "#0f172a"
+        text_muted = "#64748b"
+        hero_bg = "linear-gradient(135deg, #312e81 0%, #4338ca 50%, #4f46e5 100%)"
+        hero_subtitle = "#e0e7ff"
+        card_bg = "#ffffff"
+        card_border = "#e2e8f0"
+        card_shadow = "0 4px 15px rgba(0,0,0,0.05)"
+        event_bg = "#ffffff"
+        event_border = "#e2e8f0"
+        event_text = "#1e293b"
+        event_time = "#94a3b8"
+        alert_bg = "#fff1f2"
+        alert_silent_bg = "#f0fdf4"
+        alert_detail = "#475569"
+        dispute_bg = "#f8fafc"
+        dispute_border = "#cbd5e1"
+        dispute_text = "#1e293b"
+        input_bg = "#ffffff"
+        input_border = "#cbd5e1"
+        input_text = "#0f172a"
+        expander_bg = "#ffffff"
+        metric_val_color = "#0f172a"
+
+    return f"""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
-    /* Global */
-    .stApp { font-family: 'Inter', sans-serif; }
-    [data-testid="stHeader"] { background: transparent; }
-    .block-container { padding: 1rem 2rem !important; max-width: 1400px; }
+    /* Global Theme */
+    .stApp {{
+        background-color: {bg_app} !important;
+        color: {text_color} !important;
+        font-family: 'Inter', sans-serif;
+    }}
+    [data-testid="stHeader"] {{ background: transparent; }}
+    .block-container {{ padding: 1rem 2rem !important; max-width: 1400px; }}
+
+    /* Headings & Text */
+    h1, h2, h3, h4, h5, h6, label {{
+        color: {text_color} !important;
+    }}
 
     /* Hero Header */
-    .hero-header {
-        background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+    .hero-header {{
+        background: {hero_bg} !important;
         padding: 1.5rem 2rem;
         border-radius: 16px;
-        margin-bottom: 1.5rem;
+        margin-bottom: 0.5rem;
         display: flex;
         align-items: center;
         justify-content: space-between;
-    }
-    .hero-title {
-        color: #fff;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    }}
+    .hero-title {{
+        color: #fff !important;
         font-size: 1.8rem;
         font-weight: 800;
         letter-spacing: -0.5px;
-    }
-    .hero-subtitle {
-        color: #b8b5ff;
+    }}
+    .hero-subtitle {{
+        color: {hero_subtitle} !important;
         font-size: 0.9rem;
         font-weight: 400;
         margin-top: 4px;
-    }
-    .hero-badge {
-        background: rgba(74, 222, 128, 0.15);
-        color: #4ade80;
+    }}
+    .hero-badge {{
+        background: rgba(74, 222, 128, 0.2);
+        color: #4ade80 !important;
         padding: 6px 14px;
         border-radius: 20px;
         font-size: 0.8rem;
         font-weight: 600;
-    }
+        border: 1px solid rgba(74, 222, 128, 0.4);
+    }}
 
     /* Cards */
-    .metric-card {
-        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-        border: 1px solid rgba(255,255,255,0.06);
+    .metric-card {{
+        background: {card_bg} !important;
+        border: 1px solid {card_border} !important;
         border-radius: 14px;
         padding: 1.2rem;
         margin-bottom: 0.8rem;
-    }
-    .metric-label {
-        color: #8b8fa3;
+        box-shadow: {card_shadow};
+    }}
+    .metric-label {{
+        color: {text_muted} !important;
         font-size: 0.75rem;
         text-transform: uppercase;
         letter-spacing: 1px;
         font-weight: 600;
-    }
-    .metric-value {
-        color: #fff;
+    }}
+    .metric-value {{
+        color: {metric_val_color} !important;
         font-size: 1.6rem;
         font-weight: 700;
         margin-top: 4px;
-    }
-    .metric-value.green { color: #4ade80; }
-    .metric-value.amber { color: #fbbf24; }
-    .metric-value.red { color: #f87171; }
+    }}
+    .metric-value.green {{ color: #10b981 !important; }}
+    .metric-value.amber {{ color: #f59e0b !important; }}
+    .metric-value.red {{ color: #ef4444 !important; }}
 
     /* Progress Bar */
-    .budget-bar-bg {
-        background: rgba(255,255,255,0.05);
+    .budget-bar-bg {{
+        background: rgba(128,128,128,0.15) !important;
         border-radius: 8px;
         height: 12px;
         overflow: hidden;
         margin-top: 6px;
-    }
-    .budget-bar-fill {
+    }}
+    .budget-bar-fill {{
         height: 100%;
         border-radius: 8px;
         transition: width 0.6s ease;
-    }
+    }}
 
     /* Event Stream */
-    .event-stream {
-        background: #0d1117;
-        border: 1px solid #21262d;
+    .event-stream {{
+        background: {event_bg} !important;
+        border: 1px solid {event_border} !important;
         border-radius: 12px;
         padding: 1rem;
         font-family: 'JetBrains Mono', 'Fira Code', monospace;
         font-size: 0.78rem;
         max-height: 480px;
         overflow-y: auto;
-        color: #c9d1d9;
-    }
-    .event-line {
+        color: {event_text} !important;
+    }}
+    .event-line {{
         padding: 3px 0;
-        border-bottom: 1px solid rgba(255,255,255,0.03);
-    }
-    .event-time { color: #484f58; }
-    .event-tool { color: #79c0ff; font-weight: 600; }
-    .event-ok { color: #3fb950; }
-    .event-warn { color: #d29922; }
-    .event-alert { color: #f85149; }
+        border-bottom: 1px solid rgba(128,128,128,0.1);
+    }}
+    .event-time {{ color: {event_time} !important; }}
+    .event-tool {{ color: #6366f1 !important; font-weight: 600; }}
+    .event-ok {{ color: #10b981 !important; }}
+    .event-warn {{ color: #f59e0b !important; }}
+    .event-alert {{ color: #ef4444 !important; }}
 
     /* Alert Card */
-    .alert-card {
-        background: linear-gradient(135deg, #1c1a2e, #2a1f3d);
-        border-left: 4px solid #f85149;
+    .alert-card {{
+        background: {alert_bg} !important;
+        border-left: 4px solid #ef4444 !important;
+        border: 1px solid {card_border};
         border-radius: 10px;
         padding: 1rem 1.2rem;
         margin-bottom: 0.8rem;
-    }
-    .alert-card.silent {
-        border-left-color: #3fb950;
-        background: linear-gradient(135deg, #1a2e1c, #1f3d2a);
-    }
-    .alert-merchant {
-        color: #fff;
+    }}
+    .alert-card.silent {{
+        border-left-color: #10b981 !important;
+        background: {alert_silent_bg} !important;
+    }}
+    .alert-merchant {{
+        color: {text_color} !important;
         font-weight: 700;
         font-size: 1rem;
-    }
-    .alert-detail {
-        color: #b8b5ff;
+    }}
+    .alert-detail {{
+        color: {alert_detail} !important;
         font-size: 0.82rem;
         margin-top: 4px;
-    }
+    }}
 
     /* Dispute Box */
-    .dispute-box {
-        background: #161b22;
-        border: 1px solid #30363d;
+    .dispute-box {{
+        background: {dispute_bg} !important;
+        border: 1px solid {dispute_border} !important;
         border-radius: 10px;
         padding: 1rem;
         margin-top: 0.5rem;
-    }
-    .dispute-box pre {
-        color: #c9d1d9;
+    }}
+    .dispute-box pre {{
+        color: {dispute_text} !important;
         white-space: pre-wrap;
         word-wrap: break-word;
         font-size: 0.78rem;
-    }
+    }}
+
+    /* Streamlit Form Widgets */
+    div[data-baseweb="input"] > div {{
+        background-color: {input_bg} !important;
+        border-color: {input_border} !important;
+        color: {input_text} !important;
+    }}
+    div[data-baseweb="select"] > div {{
+        background-color: {input_bg} !important;
+        border-color: {input_border} !important;
+        color: {input_text} !important;
+    }}
+    div[data-testid="stExpander"] {{
+        background-color: {expander_bg} !important;
+        border: 1px solid {card_border} !important;
+        border-radius: 10px !important;
+    }}
+    div[data-testid="stSidebar"] {{
+        background-color: {card_bg} !important;
+        border-right: 1px solid {card_border} !important;
+    }}
 
     /* Hide Streamlit Branding */
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    [data-testid="stToolbar"] {visibility: hidden;}
+    #MainMenu {{visibility: hidden;}}
+    footer {{visibility: hidden;}}
+    [data-testid="stToolbar"] {{visibility: hidden;}}
 </style>
-""", unsafe_allow_html=True)
+"""
+
+st.markdown(get_theme_styles(st.session_state.theme), unsafe_allow_html=True)
 
 
 # ──────────────────────────────────────────────────────────────────────────
@@ -214,18 +305,29 @@ def log_event(icon: str, tool_name: str, message: str, level: str = "ok"):
 
 
 # ──────────────────────────────────────────────────────────────────────────
-# Hero Header
+# Hero Header & Theme Switcher
 # ──────────────────────────────────────────────────────────────────────────
 
-st.markdown("""
-<div class="hero-header">
-    <div>
-        <div class="hero-title">💸 BillWatchdog</div>
-        <div class="hero-subtitle">Watch your bills. Understand your spending. Catch surprises before they cost you.</div>
+col_hero, col_theme = st.columns([5.3, 1.2], gap="small")
+with col_hero:
+    st.markdown("""
+    <div class="hero-header">
+        <div>
+            <div class="hero-title">💸 BillWatchdog</div>
+            <div class="hero-subtitle">Watch your bills. Understand your spending. Catch surprises before they cost you.</div>
+        </div>
+        <div class="hero-badge">🤖 Agent: Active</div>
     </div>
-    <div class="hero-badge">🤖 Agent: Active</div>
-</div>
-""", unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
+
+with col_theme:
+    st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
+    is_dark_header = (st.session_state.get("theme", "dark") == "dark")
+    theme_btn = st.toggle("🌙 Dark Mode" if is_dark_header else "☀️ Light Mode", value=is_dark_header, key="theme_toggle_header")
+    new_h_theme = "dark" if theme_btn else "light"
+    if new_h_theme != st.session_state.get("theme"):
+        st.session_state.theme = new_h_theme
+        st.rerun()
 
 
 # ──────────────────────────────────────────────────────────────────────────
@@ -237,6 +339,15 @@ st.markdown("""
 # Sidebar: User Account & Quota Simulation (Pre-auth architecture)
 # ──────────────────────────────────────────────────────────────────────────
 with st.sidebar:
+    st.markdown("### 🎨 Appearance")
+    is_dark_sb = (st.session_state.get("theme", "dark") == "dark")
+    sb_theme_btn = st.toggle("🌙 Dark Theme" if is_dark_sb else "☀️ Light Theme", value=is_dark_sb, key="theme_toggle_sidebar")
+    new_s_theme = "dark" if sb_theme_btn else "light"
+    if new_s_theme != st.session_state.get("theme"):
+        st.session_state.theme = new_s_theme
+        st.rerun()
+    st.markdown("---")
+
     st.markdown("### 👤 User Account")
     st.caption("In production, `user_id` is extracted from AWS Cognito / OAuth JWT. For this demo, switch or reset users here.")
     user_id = st.text_input("Active User ID", value="user_1", key="global_user_id")
@@ -782,28 +893,66 @@ with right_col:
             largest_amt = top_spenders[0].get("spent", top_spenders[0].get("amount", 0)) if top_spenders else 0
             period_str = stmt.get("billing_period") or "Monthly Statement"
 
-            # 1. Gorgeous 2x2 Metric Grid (no wrapping or overlapping)
+            is_dark_theme = (st.session_state.get("theme", "dark") == "dark")
+
+            if is_dark_theme:
+                c1_box = "background:rgba(244,63,94,0.08); border:1px solid rgba(244,63,94,0.25);"
+                c1_val = "color:#ffffff;"
+                c2_box = "background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.25);"
+                c2_val = "color:#ffffff;"
+                c3_box = "background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.25);"
+                c3_val = "color:#ffffff;"
+                c4_box = "background:rgba(56,189,248,0.08); border:1px solid rgba(56,189,248,0.25);"
+                c4_val = "color:#ffffff;"
+                aud_box = "background:linear-gradient(135deg, rgba(15,23,42,0.85) 0%, rgba(30,41,59,0.95) 100%); border:1px solid rgba(99,102,241,0.35); border-left:5px solid #6366f1; color:#e2e8f0; box-shadow:0 4px 20px rgba(0,0,0,0.35);"
+                aud_head = "color:#f8fafc;"
+                aud_period = "color:#f1f5f9;"
+                aud_badge = "background:rgba(99,102,241,0.15); color:#818cf8; border:1px solid rgba(99,102,241,0.3);"
+                verdict_box = "background:rgba(15,23,42,0.6); border-left:3px solid #10b981; color:#e2e8f0;"
+                pill_style = "background:rgba(244,63,94,0.15); border:1px solid rgba(244,63,94,0.3); color:#fda4af;"
+            else:
+                c1_box = "background:#fff1f2; border:1px solid #fecdd3;"
+                c1_val = "color:#0f172a;"
+                c2_box = "background:#f0fdf4; border:1px solid #bbf7d0;"
+                c2_val = "color:#0f172a;"
+                c3_box = "background:#fffbeb; border:1px solid #fde68a;"
+                c3_val = "color:#0f172a;"
+                c4_box = "background:#f0f9ff; border:1px solid #bae6fd;"
+                c4_val = "color:#0f172a;"
+                aud_box = "background:#ffffff; border:1px solid #c7d2fe; border-left:5px solid #4f46e5; color:#1e293b; box-shadow:0 4px 15px rgba(0,0,0,0.05);"
+                aud_head = "color:#0f172a;"
+                aud_period = "color:#0f172a;"
+                aud_badge = "background:#e0e7ff; color:#4338ca; border:1px solid #c7d2fe;"
+                verdict_box = "background:#f8fafc; border-left:3px solid #10b981; color:#1e293b;"
+                pill_style = "background:#ffe4e6; border:1px solid #fca5a5; color:#9f1239;"
+
+            top_pills = "".join([
+                f"<span style='{pill_style} font-size:0.8rem; font-weight:600; padding:3px 8px; border-radius:6px; margin-right:6px; display:inline-block; margin-top:3px;'>{ts.get('vendor', ts.get('name'))}: ₹{ts.get('spent', ts.get('amount', 0)):,.2f}</span>"
+                for ts in top_spenders
+            ])
+
+            # 1. Responsive 2x2 Metric Grid
             kpi_html = f"""
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:12px 0 16px 0;">
-                <div style="background:rgba(244,63,94,0.08); border:1px solid rgba(244,63,94,0.25); border-radius:10px; padding:12px 14px;">
-                    <div style="color:#fda4af; font-size:0.72rem; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">💸 Total Debited (Spent)</div>
-                    <div style="color:#ffffff; font-size:1.35rem; font-weight:700; margin-top:4px;">₹{tot_debit:,.2f}</div>
+                <div style="{c1_box} border-radius:10px; padding:12px 14px;">
+                    <div style="color:#f43f5e; font-size:0.72rem; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">💸 Total Debited (Spent)</div>
+                    <div style="{c1_val} font-size:1.35rem; font-weight:700; margin-top:4px;">₹{tot_debit:,.2f}</div>
                     <div style="color:#f43f5e; font-size:0.72rem; margin-top:2px;">↘ {len(debits)} debits / outflows</div>
                 </div>
-                <div style="background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.25); border-radius:10px; padding:12px 14px;">
-                    <div style="color:#6ee7b7; font-size:0.72rem; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">💰 Total Credited (Deposits)</div>
-                    <div style="color:#ffffff; font-size:1.35rem; font-weight:700; margin-top:4px;">₹{tot_credit:,.2f}</div>
+                <div style="{c2_box} border-radius:10px; padding:12px 14px;">
+                    <div style="color:#10b981; font-size:0.72rem; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">💰 Total Credited (Deposits)</div>
+                    <div style="{c2_val} font-size:1.35rem; font-weight:700; margin-top:4px;">₹{tot_credit:,.2f}</div>
                     <div style="color:#10b981; font-size:0.72rem; margin-top:2px;">↗ +{len(credits)} deposits / reimbursements</div>
                 </div>
-                <div style="background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.25); border-radius:10px; padding:12px 14px;">
-                    <div style="color:#fcd34d; font-size:0.72rem; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">🔥 Net Cash Outflow</div>
-                    <div style="color:#ffffff; font-size:1.35rem; font-weight:700; margin-top:4px;">₹{net_outflow:,.2f}</div>
-                    <div style="color:#f59e0b; font-size:0.72rem; margin-top:2px;">Net statement balance delta</div>
+                <div style="{c3_box} border-radius:10px; padding:12px 14px;">
+                    <div style="color:#d97706; font-size:0.72rem; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">🔥 Net Cash Outflow</div>
+                    <div style="{c3_val} font-size:1.35rem; font-weight:700; margin-top:4px;">₹{net_outflow:,.2f}</div>
+                    <div style="color:#d97706; font-size:0.72rem; margin-top:2px;">Net statement balance delta</div>
                 </div>
-                <div style="background:rgba(56,189,248,0.08); border:1px solid rgba(56,189,248,0.25); border-radius:10px; padding:12px 14px;">
-                    <div style="color:#7dd3fc; font-size:0.72rem; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">📊 Transactions Extracted</div>
-                    <div style="color:#ffffff; font-size:1.35rem; font-weight:700; margin-top:4px;">{len(txns)} Rows</div>
-                    <div style="color:#38bdf8; font-size:0.72rem; margin-top:2px;">✓ 100% In-Memory Parsed</div>
+                <div style="{c4_box} border-radius:10px; padding:12px 14px;">
+                    <div style="color:#0284c7; font-size:0.72rem; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">📊 Transactions Extracted</div>
+                    <div style="{c4_val} font-size:1.35rem; font-weight:700; margin-top:4px;">{len(txns)} Rows</div>
+                    <div style="color:#0284c7; font-size:0.72rem; margin-top:2px;">✓ 100% In-Memory Parsed</div>
                 </div>
             </div>
             """
@@ -811,37 +960,37 @@ with right_col:
 
             # 2. Sleek Agent Executive Financial Audit Card
             audit_html = f"""
-            <div style="background:linear-gradient(135deg, rgba(15,23,42,0.85) 0%, rgba(30,41,59,0.95) 100%); border:1px solid rgba(99,102,241,0.35); border-left:5px solid #6366f1; border-radius:12px; padding:1.2rem 1.4rem; margin-bottom:1.2rem; box-shadow:0 4px 20px rgba(0,0,0,0.35);">
-                <div style="display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:0.6rem; margin-bottom:0.8rem;">
+            <div style="{aud_box} border-radius:12px; padding:1.2rem 1.4rem; margin-bottom:1.2rem;">
+                <div style="display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid rgba(128,128,128,0.15); padding-bottom:0.6rem; margin-bottom:0.8rem;">
                     <div style="display:flex; align-items:center; gap:8px;">
                         <span style="font-size:1.3rem;">🤖</span>
-                        <span style="font-size:1.02rem; font-weight:700; color:#f8fafc; letter-spacing:0.3px;">Agent Executive Financial Audit</span>
+                        <span style="font-size:1.02rem; font-weight:700; {aud_head} letter-spacing:0.3px;">Agent Executive Financial Audit</span>
                     </div>
-                    <span style="background:rgba(99,102,241,0.15); color:#818cf8; font-size:0.7rem; font-weight:600; padding:2px 8px; border-radius:6px; border:1px solid rgba(99,102,241,0.3);">
+                    <span style="{aud_badge} font-size:0.7rem; font-weight:600; padding:2px 8px; border-radius:6px;">
                         ZERO-STORAGE VERIFIED
                     </span>
                 </div>
-                <div style="display:flex; flex-direction:column; gap:0.65rem; font-size:0.86rem; line-height:1.5; color:#e2e8f0;">
+                <div style="display:flex; flex-direction:column; gap:0.65rem; font-size:0.86rem; line-height:1.5;">
                     <div>
-                        <strong style="color:#94a3b8;">📅 Statement Period:</strong> 
-                        <span style="color:#f1f5f9; font-weight:600;">{period_str}</span>
+                        <strong style="color:#64748b;">📅 Statement Period:</strong> 
+                        <span style="{aud_period} font-weight:600;">{period_str}</span>
                     </div>
                     <div>
                         <strong style="color:#f43f5e;">💸 Top Outflows:</strong><br>
                         <div style="margin-top:4px;">{top_pills}</div>
                     </div>
                     <div>
-                        <strong style="color:#38bdf8;">📈 Regular Investments & Travel:</strong> 
-                        <span style="color:#cbd5e1;">Identified systematic recurring investments (ICICI Direct, TATA MF) and routine travel expenses (Indian Railways).</span>
+                        <strong style="color:#0284c7;">📈 Regular Investments & Travel:</strong> 
+                        <span>Identified systematic recurring investments (ICICI Direct, TATA MF) and routine travel expenses (Indian Railways).</span>
                     </div>
                     <div>
-                        <strong style="color:#34d399;">💵 Inflows / Credits:</strong> 
-                        <span style="color:#34d399; font-weight:600;">₹{tot_credit:,.2f}</span>
-                        <span style="color:#94a3b8;">in employer reimbursements / credits (THWORKSTECHINDPVTLTD).</span>
+                        <strong style="color:#10b981;">💵 Inflows / Credits:</strong> 
+                        <span style="color:#10b981; font-weight:600;">₹{tot_credit:,.2f}</span>
+                        <span>in employer reimbursements / credits (THWORKSTECHINDPVTLTD).</span>
                     </div>
-                    <div style="background:rgba(15,23,42,0.6); padding:0.6rem 0.8rem; border-radius:8px; border-left:3px solid #10b981; margin-top:0.2rem;">
+                    <div style="{verdict_box} padding:0.6rem 0.8rem; border-radius:8px; margin-top:0.2rem;">
                         <strong style="color:#10b981;">🛡️ Sentinel Verdict:</strong> 
-                        <span>Normal daily living expenses silently categorized. Largest single outflow is <strong style="color:#fbbf24;">{largest_name}</strong> at <strong style="color:#fbbf24;">₹{largest_amt:,.2f}</strong>.</span>
+                        <span>Normal daily living expenses silently categorized. Largest single outflow is <strong style="color:#d97706;">{largest_name}</strong> at <strong style="color:#d97706;">₹{largest_amt:,.2f}</strong>.</span>
                     </div>
                 </div>
             </div>
