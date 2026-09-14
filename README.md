@@ -6,6 +6,13 @@
 [![Tests](https://img.shields.io/badge/Tests-56%2F56%20Passing-brightgreen)](tests/)
 [![Security](https://img.shields.io/badge/Privacy-Zero--Storage%20In--Memory-blueviolet)](scripts/check_confidential.py)
 [![Hackathon](https://img.shields.io/badge/Devpost-Agents%20for%20Humans-orange)](https://agentsforhumans.devpost.com/)
+[![Demo Video](https://img.shields.io/badge/Demo%20Video-YouTube-red?logo=youtube)](https://www.youtube.com/watch?v=TOiZAn5Y-Jk)
+[![AWS Builder](https://img.shields.io/badge/AWS%20Builder-Article-FF9900?logo=amazon-aws)](https://builder.aws.com/content/3JJestelCsRWKEdDpNue6oHBIU2/billwatchdog-building-an-autonomous-bill-sentinel-with-aws-strands-agents-and-amazon-bedrock)
+
+---
+
+> 📺 **Demo Video Walkthrough (YouTube):** [https://www.youtube.com/watch?v=TOiZAn5Y-Jk](https://www.youtube.com/watch?v=TOiZAn5Y-Jk)  
+> 📰 **Official AWS Builder Story:** [BillWatchdog: Building an Autonomous Bill Sentinel with AWS Strands Agents and Amazon Bedrock](https://builder.aws.com/content/3JJestelCsRWKEdDpNue6oHBIU2/billwatchdog-building-an-autonomous-bill-sentinel-with-aws-strands-agents-and-amazon-bedrock)
 
 ---
 
@@ -150,7 +157,9 @@ python scripts/check_confidential.py
 
 ---
 
-## 🎬 3-Minute Demo Flow
+## 🎬 3-Minute Demo Flow & Video Walkthrough
+
+> 📺 **Watch Full Video Demonstration:** [YouTube Walkthrough](https://www.youtube.com/watch?v=TOiZAn5Y-Jk)
 
 1. **Dashboard & Theme**: Toggle between **🌙 Dark Mode** and **☀️ Light Mode** via the top switch.
 2. **Encrypted Bank Statement PDF**:
@@ -176,6 +185,8 @@ python scripts/check_confidential.py
 
 * **Hackathon**: Agents for Humans — [agentsforhumans.devpost.com](https://agentsforhumans.devpost.com)
 * **Track**: Everyday Agents
+* **Demo Video**: [YouTube Explanation](https://www.youtube.com/watch?v=TOiZAn5Y-Jk)
+* **AWS Builder Story**: [AWS Builder Content](https://builder.aws.com/content/3JJestelCsRWKEdDpNue6oHBIU2/billwatchdog-building-an-autonomous-bill-sentinel-with-aws-strands-agents-and-amazon-bedrock)
 * **Submission Package**: Detailed in `devpost_submission.md`
 * **Repository**: [github.com/Thaiebu/bill-watchdog-agent-for-human-hackethon](https://github.com/Thaiebu/bill-watchdog-agent-for-human-hackethon)
 * **AWS Services**: Amazon Bedrock Claude 3 Haiku · AWS Strands Agents SDK · Bedrock AgentCore

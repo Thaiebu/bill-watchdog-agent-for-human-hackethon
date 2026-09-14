@@ -5,11 +5,26 @@
 **Track:** Everyday Agents  
 **GitHub Repository:** https://github.com/Thaiebu/bill-watchdog-agent-for-human-hackethon  
 **License:** MIT License (`LICENSE`)  
+**Demo Video URL:** https://www.youtube.com/watch?v=TOiZAn5Y-Jk  
+**AWS Builder Article:** https://builder.aws.com/content/3JJestelCsRWKEdDpNue6oHBIU2/billwatchdog-building-an-autonomous-bill-sentinel-with-aws-strands-agents-and-amazon-bedrock  
 
 ---
 
 ## 📌 Tagline (1 sentence)
 > An autonomous background agent built on AWS Strands SDK that silently audits your bills, catches stealth price hikes and promo cliffs, and auto-drafts dispute emails before you lose money.
+
+---
+
+
+## 📋 Devpost Submission Checklist & Required Links
+
+| Field on Devpost | Status | Submission Value |
+| :--- | :---: | :--- |
+| **Demo Video URL** | ✅ Ready | [https://www.youtube.com/watch?v=TOiZAn5Y-Jk](https://www.youtube.com/watch?v=TOiZAn5Y-Jk) |
+| **AWS Builder Article / ID** | ✅ Ready | [AWS Builder Story Link](https://builder.aws.com/content/3JJestelCsRWKEdDpNue6oHBIU2/billwatchdog-building-an-autonomous-bill-sentinel-with-aws-strands-agents-and-amazon-bedrock) |
+| **Public GitHub Repository** | ✅ Ready | [github.com/Thaiebu/bill-watchdog-agent-for-human-hackethon](https://github.com/Thaiebu/bill-watchdog-agent-for-human-hackethon) |
+| **Open-source License** | ✅ Ready | Standard MIT License (`LICENSE`) |
+| **Selected Track** | ✅ Ready | **Everyday Agents** |
 
 ---
 
