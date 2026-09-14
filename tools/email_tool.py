@@ -84,13 +84,25 @@ def fetch_billing_emails(
                 "amount":   invoice.get("total_amount"),
             })
 
+            # Check if an unencrypted PDF is attached and can provide better figures
+            if email.has_pdf and not email.is_pdf_encrypted and email.pdf_bytes:
+                from tools.pdf_statement_tool import decrypt_and_extract_statement
+                pdf_res = decrypt_and_extract_statement(email.pdf_bytes, password="")
+                if pdf_res.get("success") and pdf_res.get("invoice"):
+                    invoice = pdf_res["invoice"]
+
             processed.append({
-                "email_id":   email.id,
-                "subject":    email.subject,
-                "sender":     email.sender,
-                "date":       email.date,
-                "snippet":    email.snippet,
-                "invoice":    invoice,
+                "email_id":          email.id,
+                "subject":           email.subject,
+                "sender":            email.sender,
+                "date":              email.date,
+                "snippet":           email.snippet,
+                "invoice":           invoice,
+                "has_pdf":           email.has_pdf,
+                "pdf_filename":      email.pdf_filename,
+                "is_pdf_encrypted":  email.is_pdf_encrypted,
+                "requires_password": email.is_pdf_encrypted,
+                "pdf_bytes":         email.pdf_bytes,
             })
         except Exception as e:
             # Don't fail the whole batch if one email fails to parse

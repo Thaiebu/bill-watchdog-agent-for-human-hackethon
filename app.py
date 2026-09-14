@@ -858,10 +858,47 @@ with tab_email:
                     col_b.markdown(f"**Date:** {email_data['date']}")
                     st.markdown(f"**Snippet:** _{email_data['snippet'][:150]}_")
 
+                    # Check if email has password-protected PDF attachment
+                    if email_data.get("has_pdf") and email_data.get("is_pdf_encrypted"):
+                        pdf_name = email_data.get("pdf_filename") or "statement.pdf"
+                        st.warning(f"🔒 **Password-Protected Statement PDF Attached:** `{pdf_name}`")
+                        st.caption("🛡️ **Zero-Trust Security:** Passwords are kept in volatile memory only for decryption and are NEVER saved to database, disk, or logs.")
+
+                        c_pwd, c_btn = st.columns([2, 1])
+                        with c_pwd:
+                            pwd_in = st.text_input(
+                                "Statement Password",
+                                type="password",
+                                placeholder="e.g. IN1995, PAN, or DOB (Demo: IN1995)",
+                                key=f"pwd_input_{email_data['email_id']}",
+                                help="Most Indian bank statements use PAN or First 4 letters of Name + DOB"
+                            )
+                        with c_btn:
+                            st.markdown("<div style='height: 28px;'></div>", unsafe_allow_html=True)
+                            if st.button("🔓 Decrypt & Extract", key=f"btn_dec_{email_data['email_id']}"):
+                                if not pwd_in:
+                                    st.error("Please enter the password.")
+                                else:
+                                    from tools.pdf_statement_tool import decrypt_and_extract_statement
+                                    dec_res = decrypt_and_extract_statement(email_data.get("pdf_bytes"), password=pwd_in)
+                                    if dec_res.get("success"):
+                                        st.success(f"✅ Statement Decrypted! {dec_res['invoice']['merchant_name']} — ₹{dec_res['invoice']['total_amount']:,.2f}")
+                                        email_data["invoice"] = dec_res["invoice"]
+                                        email_data["is_pdf_encrypted"] = False
+                                        st.session_state[f"dec_{email_data['email_id']}"] = dec_res["invoice"]
+                                        time.sleep(0.5)
+                                        st.rerun()
+                                    else:
+                                        st.error(dec_res.get("error", "Decryption failed"))
+
+                    # Check if session state has decrypted version
+                    if f"dec_{email_data['email_id']}" in st.session_state:
+                        invoice = st.session_state[f"dec_{email_data['email_id']}"]
+
                     if has_error:
                         st.warning(f"⚠️ Parse error: {has_error}")
                     elif invoice:
-                        st.markdown("**Extracted Invoice:**")
+                        st.markdown("**Extracted Invoice / Statement:**")
                         st.json({
                             "merchant_name": invoice.get("merchant_name"),
                             "total_amount":  invoice.get("total_amount"),

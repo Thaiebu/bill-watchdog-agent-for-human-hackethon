@@ -120,6 +120,14 @@ class IMAPEmailAdapter(EmailInboxAdapter):
             body = _extract_body(msg)
             snippet = body[:200].replace("\n", " ") if body else ""
 
+            # Check for PDF attachment (e.g. monthly bank statement)
+            pdf_name, pdf_bytes = _extract_pdf_attachment(msg)
+            is_enc = False
+            if pdf_bytes:
+                from tools.pdf_statement_tool import inspect_pdf_bytes
+                p_info = inspect_pdf_bytes(pdf_bytes)
+                is_enc = p_info.get("is_encrypted", False)
+
             raw = RawEmail(
                 id=f"imap-{msg_id.decode()}",
                 subject=subject,
@@ -127,6 +135,10 @@ class IMAPEmailAdapter(EmailInboxAdapter):
                 date=date,
                 snippet=snippet,
                 body_text=body or "",
+                has_pdf=bool(pdf_bytes),
+                pdf_filename=pdf_name,
+                pdf_bytes=pdf_bytes,
+                is_pdf_encrypted=is_enc,
             )
             self._email_cache[raw.id] = raw
             billing_emails.append(raw)
@@ -190,3 +202,17 @@ def _extract_body(msg) -> str:
     body = re.sub(r"<[^>]+>", " ", body)
     body = re.sub(r"\s+", " ", body).strip()
     return body
+
+
+def _extract_pdf_attachment(msg) -> tuple[Optional[str], Optional[bytes]]:
+    """Check MIME parts for PDF attachments and return (filename, bytes)."""
+    if msg.is_multipart():
+        for part in msg.walk():
+            content_type = part.get_content_type()
+            filename = part.get_filename() or ""
+            filename = _decode_header_value(filename)
+            if content_type == "application/pdf" or filename.lower().endswith(".pdf"):
+                payload = part.get_payload(decode=True)
+                if payload:
+                    return filename or "statement.pdf", payload
+    return None, None

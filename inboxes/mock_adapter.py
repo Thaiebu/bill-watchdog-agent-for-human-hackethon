@@ -1,3 +1,53 @@
+
+def _generate_mock_statement_pdf(password: str = "IN1995") -> bytes:
+    """Generate a realistic in-memory encrypted bank statement PDF for demo."""
+    import io
+    from pypdf import PdfWriter
+    from pypdf.generic import DecodedStreamObject, NameObject, DictionaryObject
+
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=612, height=792)
+
+    text_stream = b"""BT
+/F1 12 Tf
+72 712 Td
+(INDUSIND BANK MONTHLY E-STATEMENT) Tj
+0 -24 Td
+(Statement Date: 2026-09-14) Tj
+0 -18 Td
+(Account No: 15XXXXXX6528) Tj
+0 -24 Td
+(Total Amount Due: INR 14,250.00) Tj
+0 -18 Td
+(Payment Due Date: 2026-09-28) Tj
+0 -18 Td
+(Minimum Amount Due: INR 1,200.00) Tj
+0 -24 Td
+(Summary of Charges:) Tj
+0 -18 Td
+(1. Groceries & Dining: INR 6,250.00) Tj
+0 -18 Td
+(2. Fuel & Commute: INR 8,000.00) Tj
+ET"""
+
+    stream_obj = DecodedStreamObject()
+    stream_obj.set_data(text_stream)
+    page[NameObject('/Contents')] = stream_obj
+
+    font_dict = DictionaryObject({
+        NameObject('/Type'): NameObject('/Font'),
+        NameObject('/Subtype'): NameObject('/Type1'),
+        NameObject('/BaseFont'): NameObject('/Helvetica'),
+    })
+    page[NameObject('/Resources')] = DictionaryObject({
+        NameObject('/Font'): DictionaryObject({NameObject('/F1'): font_dict})
+    })
+
+    writer.encrypt(password)
+    buf = io.BytesIO()
+    writer.write(buf)
+    return buf.getvalue()
+
 """
 MockEmailAdapter — Pre-loaded synthetic billing emails for demo/testing.
 No auth required. Covers individuals, startups, and SaaS companies.
@@ -415,6 +465,31 @@ New Balance: INR 24,500.00
 Payment Due Date: 30 Sep 2026
 AutoPay is scheduled for 28 Sep 2026.
 """,
+    ),
+
+    RawEmail(
+        id="mock-026",
+        subject="IndusInd Bank e-Statement for Sep 2026 [Password Protected]",
+        sender="IndusInd_Bank@indusind.com",
+        date="2026-09-14",
+        snippet="Dear Customer, your IndusInd Bank Account e-Statement for September 2026 is attached. This file is password protected for your security.",
+        body_text="""Dear Customer,
+
+Please find attached your IndusInd Bank Account e-Statement for the period ending 14-Sep-2026.
+
+Important Security Note:
+This PDF attachment is password protected.
+Your password is the first 4 letters of your name in CAPITALS followed by your Year of Birth (e.g. IN1995).
+
+Total Amount Due: INR 14,250.00
+Payment Due Date: 28-Sep-2026
+
+Assuring you of our best services at all times.
+Team IndusInd Bank""",
+        has_pdf=True,
+        pdf_filename="IndusInd_eStatement_Sep2026.pdf",
+        pdf_bytes=_generate_mock_statement_pdf("IN1995"),
+        is_pdf_encrypted=True,
     ),
     RawEmail(
         id="mock-020",

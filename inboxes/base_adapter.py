@@ -24,13 +24,17 @@ from typing import List, Optional
 @dataclass
 class RawEmail:
     """Normalized email structure returned by all adapters."""
-    id:        str
-    subject:   str
-    sender:    str
-    date:      str          # ISO: YYYY-MM-DD
-    snippet:   str          # First ~200 chars
-    body_text: str          # Full plain-text body
-    is_html:   bool = False
+    id:                 str
+    subject:            str
+    sender:             str
+    date:               str          # ISO: YYYY-MM-DD
+    snippet:            str          # First ~200 chars
+    body_text:          str          # Full plain-text body
+    is_html:            bool = False
+    has_pdf:            bool = False
+    pdf_filename:       Optional[str] = None
+    pdf_bytes:          Optional[bytes] = None
+    is_pdf_encrypted:   bool = False
 
 
 # Billing keyword filters applied by all adapters
