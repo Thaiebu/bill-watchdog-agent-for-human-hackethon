@@ -115,11 +115,11 @@ tests/test_tools.py            16 passed (extract, baseline, anomaly detection, 
 ```bash
 # Clone the repository
 git clone https://github.com/Thaiebu/bill-watchdog-agent-for-human-hackethon.git
-cd bill-watchdog-agent-for-human-hackethon/BillWatchdog
+cd bill-watchdog-agent-for-human-hackethon
 
 # Create & activate virtual environment
-python3 -m venv ../venv
-source ../venv/bin/activate
+python3 -m venv venv
+source venv/bin/activate
 
 # Install dependencies (includes strands-agents, pypdf, fonttools)
 pip install -r requirements.txt
